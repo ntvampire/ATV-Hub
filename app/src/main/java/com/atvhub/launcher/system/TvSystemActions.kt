@@ -52,7 +52,7 @@ object TvSystemActions {
 
             // Попытка найти внешний HDMI ввод
             val hdmiInput = inputList?.firstOrNull {
-                it.type == TvInputManager.INPUT_TYPE_HDMI || it.isPassthroughInput
+                it.type == android.media.tv.TvInputInfo.TYPE_HDMI || it.isPassthroughInput
             }
 
             if (hdmiInput != null) {
