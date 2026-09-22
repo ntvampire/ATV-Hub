@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_tv"
+    android:orientation="vertical">
+
+    <!-- Верхняя панель (Top Bar) с TV Overscan Safe Margins -->
+    <LinearLayout
+        android:id="@+id/top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/top_bar_height"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/tv_overscan_horizontal"
+        android:paddingTop="12dp"
+        android:paddingEnd="@dimen/tv_overscan_horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ATV HUB"
+            android:textColor="@color/accent_white"
+            android:textSize="@dimen/text_size_title"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Кнопка Настройки сети -->
+        <ImageButton
+            android:id="@+id/btn_network"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/selector_icon_button"
+            android:contentDescription="@string/action_network_settings"
+            android:focusable="true"
+            android:src="@drawable/ic_wifi"
+            android:tint="@color/selector_icon_tint" />
+
+        <!-- Кнопка HDMI входы -->
+        <ImageButton
+            android:id="@+id/btn_hdmi"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/selector_icon_button"
+            android:contentDescription="@string/action_hdmi_inputs"
+            android:focusable="true"
+            android:src="@drawable/ic_hdmi"
+            android:tint="@color/selector_icon_tint" />
+
+        <!-- Кнопка Настройки устройства (системные) -->
+        <ImageButton
+            android:id="@+id/btn_device_settings"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/selector_icon_button"
+            android:contentDescription="@string/action_device_settings"
+            android:focusable="true"
+            android:src="@drawable/ic_settings"
+            android:tint="@color/selector_icon_tint" />
+
+        <!-- Часы -->
+        <TextClock
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:format12Hour="HH:mm"
+            android:format24Hour="HH:mm"
+            android:textColor="@color/text_secondary"
+            android:textSize="@dimen/text_size_header" />
+    </LinearLayout>
+
+    <!-- Вертикальный список горизонтальных строк (лент) -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_home_rows"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:descendantFocusability="afterDescendants"
+        android:paddingTop="16dp"
+        android:paddingBottom="@dimen/tv_overscan_vertical" />
+
+</LinearLayout>

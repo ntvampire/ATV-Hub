@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_tv"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/tv_overscan_horizontal"
+        android:paddingTop="@dimen/tv_overscan_vertical"
+        android:paddingEnd="@dimen/tv_overscan_horizontal"
+        android:paddingBottom="@dimen/tv_overscan_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:text="@string/action_launcher_settings"
+            android:textColor="@color/accent_white"
+            android:textSize="@dimen/text_size_title"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btn_settings_update"
+            android:layout_width="320dp"
+            android:layout_height="48dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/selector_button_bg"
+            android:focusable="true"
+            android:text="@string/settings_check_update"
+            android:textAllCaps="false"
+            android:textColor="@color/selector_button_text"
+            android:textSize="@dimen/text_size_body" />
+
+        <Button
+            android:id="@+id/btn_settings_default_home"
+            android:layout_width="320dp"
+            android:layout_height="48dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/selector_button_bg"
+            android:focusable="true"
+            android:text="@string/dialog_set_default_home_title"
+            android:textAllCaps="false"
+            android:textColor="@color/selector_button_text"
+            android:textSize="@dimen/text_size_body" />
+
+        <TextView
+            android:id="@+id/tv_app_version"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:textColor="@color/text_muted"
+            android:textSize="@dimen/text_size_badge" />
+
+    </LinearLayout>
+
+</ScrollView>

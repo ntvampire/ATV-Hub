@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ATV Hub</string>
+    <string name="app_desc">Универсальный лаунчер-медиаплеер для Android TV</string>
+
+    <!-- Системная панель -->
+    <string name="action_search">Поиск</string>
+    <string name="action_settings">Настройки</string>
+    <string name="action_device_settings">Настройки устройства</string>
+    <string name="action_network_settings">Сеть</string>
+    <string name="action_hdmi_inputs">HDMI входы</string>
+    <string name="action_launcher_settings">Настройки экрана</string>
+
+    <!-- Ленты главного экрана -->
+    <string name="row_apps">Приложения</string>
+    <string name="row_continue_watching">Продолжить просмотр</string>
+    <string name="row_new_episodes">Новые серии</string>
+    <string name="row_iptv_favorites">ТВ Каналы</string>
+    <string name="row_movies_digital">Новинки кино в цифре</string>
+    <string name="row_series_digital">Новинки сериалов</string>
+    <string name="row_favorites">Избранное</string>
+    <string name="row_youtube_recs">YouTube: Рекомендации</string>
+    <string name="row_youtube_subs">YouTube: Подписки</string>
+
+    <!-- Действия в карточке фильма -->
+    <string name="btn_watch_online">Смотреть</string>
+    <string name="btn_torrents">Торренты</string>
+    <string name="btn_trailer">Трейлер</string>
+    <string name="btn_add_favorite">В избранное</string>
+    <string name="btn_remove_favorite">Из избранного</string>
+    <string name="btn_track_series">Следить</string>
+    <string name="btn_untrack_series">Не следить</string>
+
+    <!-- Назначение домашним экраном -->
+    <string name="dialog_set_default_home_title">Сделать главным экраном?</string>
+    <string name="dialog_set_default_home_desc">Использовать ATV Hub как основной домашний экран при включении телевизора и нажатии кнопки Home.</string>
+    <string name="btn_set_as_default">Назначить по умолчанию</string>
+    <string name="btn_later">Позже</string>
+
+    <!-- Обновления -->
+    <string name="settings_check_update">Проверить обновления</string>
+    <string name="update_available_title">Доступно обновление %1$s</string>
+    <string name="update_up_to_date">У вас установлена актуальная версия</string>
+    <string name="update_btn_install">Скачать и обновить</string>
+    <string name="update_downloading">Скачивание обновления: %1$d%%</string>
+
+    <!-- Торрент-сервер -->
+    <string name="settings_torrserver">Движок TorrServer</string>
+    <string name="torrserver_mode_internal">Встроенный (127.0.0.1:8090)</string>
+    <string name="torrserver_mode_external">Внешний сервер</string>
+
+    <!-- IPTV -->
+    <string name="iptv_playlist_url">Адрес M3U плейлиста</string>
+    <string name="iptv_epg_url">Адрес XMLTV EPG</string>
+</resources>

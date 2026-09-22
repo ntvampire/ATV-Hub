@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Строгая темная палитра без градиентов -->
+    <color name="bg_tv">#0A0A0C</color>
+    <color name="bg_surface">#121216</color>
+    <color name="card_bg">#18181D</color>
+    <color name="card_bg_focused">#24242C</color>
+    <color name="border_normal">#24242A</color>
+    <color name="border_focused">#FFFFFF</color>
+
+    <color name="text_primary">#F2F2F5</color>
+    <color name="text_secondary">#8E8E96</color>
+    <color name="text_muted">#5A5A62</color>
+
+    <color name="badge_bg">#23232B</color>
+    <color name="badge_text">#D0D0D6</color>
+
+    <color name="accent_white">#FFFFFF</color>
+    <color name="transparent">#00000000</color>
+    <color name="overlay_dim">#CC000000</color>
+</resources>

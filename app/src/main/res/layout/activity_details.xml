@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_tv"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/tv_overscan_horizontal"
+        android:paddingTop="@dimen/tv_overscan_vertical"
+        android:paddingEnd="@dimen/tv_overscan_horizontal"
+        android:paddingBottom="@dimen/tv_overscan_vertical">
+
+        <!-- Постер фильма (слева) -->
+        <FrameLayout
+            android:layout_width="220dp"
+            android:layout_height="330dp"
+            android:background="@drawable/selector_card_border"
+            android:padding="2dp">
+
+            <ImageView
+                android:id="@+id/iv_detail_poster"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@null"
+                android:scaleType="centerCrop" />
+        </FrameLayout>
+
+        <!-- Описание и кнопки (справа) -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- Название -->
+            <TextView
+                android:id="@+id/tv_detail_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/accent_white"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+
+            <!-- Метаинформация (год, жанры, рейтинг, качество) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_detail_meta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_size_body" />
+
+                <TextView
+                    android:id="@+id/tv_detail_quality"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:background="@drawable/badge_background"
+                    android:paddingStart="6dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="6dp"
+                    android:paddingBottom="2dp"
+                    android:textColor="@color/badge_text"
+                    android:textSize="@dimen/text_size_badge"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Описание -->
+            <TextView
+                android:id="@+id/tv_detail_desc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:lineSpacingExtra="4dp"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_size_body" />
+
+            <!-- Ряд кнопок действий под пульт -->
+            <LinearLayout
+                android:id="@+id/layout_actions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:orientation="horizontal">
+
+                <!-- Смотреть -->
+                <Button
+                    android:id="@+id/btn_watch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="12dp"
+                    android:background="@drawable/selector_button_bg"
+                    android:focusable="true"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:text="@string/btn_watch_online"
+                    android:textAllCaps="false"
+                    android:textColor="@color/selector_button_text"
+                    android:textSize="@dimen/text_size_body"
+                    android:textStyle="bold" />
+
+                <!-- Торренты -->
+                <Button
+                    android:id="@+id/btn_torrents"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="12dp"
+                    android:background="@drawable/selector_button_bg"
+                    android:focusable="true"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:text="@string/btn_torrents"
+                    android:textAllCaps="false"
+                    android:textColor="@color/selector_button_text"
+                    android:textSize="@dimen/text_size_body"
+                    android:textStyle="bold" />
+
+                <!-- Трейлер -->
+                <Button
+                    android:id="@+id/btn_trailer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="12dp"
+                    android:background="@drawable/selector_button_bg"
+                    android:focusable="true"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:text="@string/btn_trailer"
+                    android:textAllCaps="false"
+                    android:textColor="@color/selector_button_text"
+                    android:textSize="@dimen/text_size_body"
+                    android:textStyle="bold" />
+
+                <!-- Избранное -->
+                <Button
+                    android:id="@+id/btn_favorite"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="12dp"
+                    android:background="@drawable/selector_button_bg"
+                    android:focusable="true"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="@string/btn_add_favorite"
+                    android:textAllCaps="false"
+                    android:textColor="@color/selector_button_text"
+                    android:textSize="@dimen/text_size_body" />
+
+                <!-- Следить (для сериалов) -->
+                <Button
+                    android:id="@+id/btn_track"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:background="@drawable/selector_button_bg"
+                    android:focusable="true"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="@string/btn_track_series"
+                    android:textAllCaps="false"
+                    android:textColor="@color/selector_button_text"
+                    android:textSize="@dimen/text_size_body"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>

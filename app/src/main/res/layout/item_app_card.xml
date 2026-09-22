@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="@dimen/app_item_width"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="@dimen/tv_card_spacing"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:id="@+id/card_app_container"
+        android:layout_width="@dimen/app_item_width"
+        android:layout_height="@dimen/app_item_height"
+        android:background="@drawable/selector_card_border"
+        android:duplicateParentState="true"
+        android:padding="8dp">
+
+        <ImageView
+            android:id="@+id/iv_app_icon"
+            android:layout_width="@dimen/app_icon_size"
+            android:layout_height="@dimen/app_icon_size"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:scaleType="fitCenter" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tv_app_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/text_size_badge" />
+
+</LinearLayout>
