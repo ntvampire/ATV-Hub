@@ -19,6 +19,10 @@
 APP_NAME="Gradle"
 APP_BASE_NAME=`basename "$0"`
 
+# Resolve APP_HOME
+DIRNAME=$(dirname "$0")
+APP_HOME=$(cd "$DIRNAME" && pwd)
+
 warn () {
     echo "$*"
 }
