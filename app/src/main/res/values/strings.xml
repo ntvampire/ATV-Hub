@@ -8,8 +8,11 @@
     <string name="action_settings">Настройки</string>
     <string name="action_device_settings">Настройки устройства</string>
     <string name="action_network_settings">Сеть</string>
-    <string name="action_hdmi_inputs">HDMI входы</string>
-    <string name="action_launcher_settings">Настройки экрана</string>
+    <string name="action_hdmi_inputs">Видеовходы</string>
+    <string name="action_launcher_settings">Настройки ATV Hub</string>
+    <string name="dialog_select_input_title">Выберите видеовход</string>
+    <string name="btn_cancel">Отмена</string>
+    <string name="input_not_found">Видеовходы не найдены</string>
 
     <!-- Ленты главного экрана -->
     <string name="row_apps">Приложения</string>

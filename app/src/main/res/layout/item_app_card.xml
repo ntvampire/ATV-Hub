@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="@dimen/app_item_width"
+    android:layout_width="@dimen/app_card_width"
     android:layout_height="wrap_content"
     android:layout_marginEnd="@dimen/tv_card_spacing"
     android:clickable="true"
@@ -8,28 +8,39 @@
     android:gravity="center_horizontal"
     android:orientation="vertical">
 
+    <!-- Прямоугольная карточка Android TV (16:9) с рамкой фокуса -->
     <FrameLayout
         android:id="@+id/card_app_container"
-        android:layout_width="@dimen/app_item_width"
-        android:layout_height="@dimen/app_item_height"
+        android:layout_width="@dimen/app_card_width"
+        android:layout_height="@dimen/app_card_height"
         android:background="@drawable/selector_card_border"
         android:duplicateParentState="true"
-        android:padding="8dp">
+        android:padding="2dp">
 
+        <!-- Баннер приложения (стандарт Android TV 16:9) -->
         <ImageView
-            android:id="@+id/iv_app_icon"
-            android:layout_width="@dimen/app_icon_size"
-            android:layout_height="@dimen/app_icon_size"
-            android:layout_gravity="center"
+            android:id="@+id/iv_app_banner"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:contentDescription="@null"
             android:scaleType="fitCenter" />
+
+        <!-- Фоллбэк: иконка по центру, если у приложения нет прямоугольного баннера -->
+        <ImageView
+            android:id="@+id/iv_app_icon_fallback"
+            android:layout_width="@dimen/app_icon_fallback_size"
+            android:layout_height="@dimen/app_icon_fallback_size"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
     </FrameLayout>
 
     <TextView
         android:id="@+id/tv_app_label"
-        android:layout_width="match_parent"
+        android:layout_width="@dimen/app_card_width"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="4dp"
         android:ellipsize="end"
         android:gravity="center"
         android:maxLines="1"

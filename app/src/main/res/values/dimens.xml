@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- TV Overscan Safe Margins -->
-    <dimen name="tv_overscan_horizontal">48dp</dimen>
-    <dimen name="tv_overscan_vertical">36dp</dimen>
-    <dimen name="tv_row_spacing">24dp</dimen>
-    <dimen name="tv_card_spacing">16dp</dimen>
+    <!-- TV Safe Zone Margins -->
+    <dimen name="tv_overscan_horizontal">40dp</dimen>
+    <dimen name="tv_overscan_vertical">16dp</dimen>
+    <dimen name="tv_row_spacing">12dp</dimen>
+    <dimen name="tv_card_spacing">12dp</dimen>
 
     <!-- Header & Top Bar -->
-    <dimen name="top_bar_height">56dp</dimen>
-    <dimen name="top_bar_icon_size">24dp</dimen>
-    <dimen name="top_bar_btn_padding">12dp</dimen>
+    <dimen name="top_bar_height">44dp</dimen>
+    <dimen name="top_bar_icon_size">22dp</dimen>
+    <dimen name="top_bar_btn_size">36dp</dimen>
 
-    <!-- Card Sizes (10-foot UI) -->
+    <!-- Card Sizes (Рассчитано так, чтобы 1 ряд приложений + 2 ряда лент помещались целиком) -->
+    <!-- Android TV App Banner (16:9) -->
+    <dimen name="app_card_width">124dp</dimen>
+    <dimen name="app_card_height">70dp</dimen>
+    <dimen name="app_icon_fallback_size">40dp</dimen>
+
     <!-- Movie / Series Poster (2:3) -->
-    <dimen name="poster_width">140dp</dimen>
-    <dimen name="poster_height">210dp</dimen>
-    <dimen name="poster_radius">6dp</dimen>
+    <dimen name="poster_width">88dp</dimen>
+    <dimen name="poster_height">132dp</dimen>
+    <dimen name="poster_radius">4dp</dimen>
 
-    <!-- App Drawer Item -->
-    <dimen name="app_item_width">100dp</dimen>
-    <dimen name="app_item_height">100dp</dimen>
-    <dimen name="app_icon_size">56dp</dimen>
-
-    <!-- IPTV / YouTube Video Card (16:9) -->
-    <dimen name="video_card_width">240dp</dimen>
-    <dimen name="video_card_height">135dp</dimen>
+    <!-- Video Card (16:9) -->
+    <dimen name="video_card_width">178dp</dimen>
+    <dimen name="video_card_height">100dp</dimen>
 
     <!-- Focus Outline Stroke -->
     <dimen name="focus_stroke_width">2dp</dimen>
 
     <!-- Typography -->
-    <dimen name="text_size_title">20sp</dimen>
-    <dimen name="text_size_header">16sp</dimen>
-    <dimen name="text_size_body">14sp</dimen>
-    <dimen name="text_size_badge">11sp</dimen>
+    <dimen name="text_size_title">18sp</dimen>
+    <dimen name="text_size_header">15sp</dimen>
+    <dimen name="text_size_body">12sp</dimen>
+    <dimen name="text_size_badge">10sp</dimen>
 </resources>

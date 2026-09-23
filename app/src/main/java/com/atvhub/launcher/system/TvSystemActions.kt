@@ -45,34 +45,79 @@ object TvSystemActions {
         }
     }
 
-    fun openHdmiInputs(context: Context) {
+    fun showInputsDialog(activity: Activity) {
         try {
-            val tvInputManager = context.getSystemService(Context.TV_INPUT_SERVICE) as? TvInputManager
-            val inputList = tvInputManager?.tvInputList
+            val tvInputManager = activity.getSystemService(Context.TV_INPUT_SERVICE) as? TvInputManager
+            val inputList = tvInputManager?.tvInputList?.filter { !it.isHidden(activity) } ?: emptyList()
 
-            // Попытка найти внешний HDMI ввод
-            val hdmiInput = inputList?.firstOrNull {
-                it.type == android.media.tv.TvInputInfo.TYPE_HDMI || it.isPassthroughInput
-            }
+            if (inputList.isNotEmpty()) {
+                val inputNames = mutableListOf<String>()
+                val inputs = mutableListOf<android.media.tv.TvInputInfo>()
 
-            if (hdmiInput != null) {
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    data = Uri.parse("content://android.media.tv/passthrough/${hdmiInput.id}")
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                for (input in inputList) {
+                    val label = try {
+                        input.loadLabel(activity)?.toString()
+                    } catch (_: Exception) {
+                        null
+                    }
+
+                    val typeLabel = when (input.type) {
+                        android.media.tv.TvInputInfo.TYPE_HDMI -> "HDMI"
+                        android.media.tv.TvInputInfo.TYPE_TUNER -> "ТВ / Антенна"
+                        android.media.tv.TvInputInfo.TYPE_COMPONENT -> "Компонент"
+                        android.media.tv.TvInputInfo.TYPE_COMPOSITE -> "AV"
+                        android.media.tv.TvInputInfo.TYPE_DISPLAY_PORT -> "DisplayPort"
+                        else -> "Вход"
+                    }
+
+                    val displayName = if (!label.isNullOrBlank()) {
+                        "$typeLabel: $label"
+                    } else {
+                        val simpleId = input.id.substringAfterLast('.')
+                        "$typeLabel ($simpleId)"
+                    }
+
+                    inputNames.add(displayName)
+                    inputs.add(input)
                 }
-                context.startActivity(intent)
-                return
+
+                if (inputs.isNotEmpty()) {
+                    android.app.AlertDialog.Builder(activity)
+                        .setTitle(R.string.dialog_select_input_title)
+                        .setItems(inputNames.toTypedArray()) { _, which ->
+                            val selected = inputs[which]
+                            try {
+                                val uri = if (selected.isPassthroughInput) {
+                                    Uri.parse("content://android.media.tv/passthrough/${selected.id}")
+                                } else {
+                                    android.media.tv.TvContract.buildChannelUriForPassthroughInput(selected.id)
+                                        ?: Uri.parse("content://android.media.tv/passthrough/${selected.id}")
+                                }
+                                val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                activity.startActivity(intent)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                        .setNegativeButton(R.string.btn_cancel, null)
+                        .show()
+                    return
+                }
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
 
-        // Альтернативный запуск системного селектора входов
-        val generalIntent = Intent(Intent.ACTION_VIEW, Uri.parse("content://android.media.tv/channel"))
-        generalIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        if (generalIntent.resolveActivity(context.packageManager) != null) {
-            context.startActivity(generalIntent)
+        // Запасной запуск системного селектора входов
+        val generalIntent = Intent(Intent.ACTION_VIEW, Uri.parse("content://android.media.tv/channel")).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        if (generalIntent.resolveActivity(activity.packageManager) != null) {
+            activity.startActivity(generalIntent)
         } else {
-            Toast.makeText(context, context.getString(R.string.action_hdmi_inputs), Toast.LENGTH_SHORT).show()
+            Toast.makeText(activity, activity.getString(R.string.input_not_found), Toast.LENGTH_SHORT).show()
         }
     }
 

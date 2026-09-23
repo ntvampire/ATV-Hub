@@ -1,6 +1,7 @@
 package com.atvhub.launcher.ui.adapter
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.atvhub.launcher.databinding.ItemAppCardBinding
@@ -21,8 +22,8 @@ class AppCardAdapter(
             }
 
             binding.root.setOnFocusChangeListener { view, hasFocus ->
-                val scale = if (hasFocus) 1.05f else 1.0f
-                view.animate().scaleX(scale).scaleY(scale).setDuration(120).start()
+                val scale = if (hasFocus) 1.04f else 1.0f
+                view.animate().scaleX(scale).scaleY(scale).setDuration(100).start()
             }
         }
     }
@@ -40,10 +41,15 @@ class AppCardAdapter(
         val app = apps[position]
         holder.binding.apply {
             tvAppLabel.text = app.label
+
             if (app.banner != null) {
-                ivAppIcon.setImageDrawable(app.banner)
-            } else if (app.icon != null) {
-                ivAppIcon.setImageDrawable(app.icon)
+                ivAppBanner.setImageDrawable(app.banner)
+                ivAppBanner.visibility = View.VISIBLE
+                ivAppIconFallback.visibility = View.GONE
+            } else {
+                ivAppBanner.visibility = View.GONE
+                ivAppIconFallback.setImageDrawable(app.icon)
+                ivAppIconFallback.visibility = View.VISIBLE
             }
         }
     }

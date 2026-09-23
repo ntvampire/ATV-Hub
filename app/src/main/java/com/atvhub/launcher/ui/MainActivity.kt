@@ -48,11 +48,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnHdmi.setOnClickListener {
-            TvSystemActions.openHdmiInputs(this)
+            TvSystemActions.showInputsDialog(this)
         }
 
         binding.btnDeviceSettings.setOnClickListener {
             TvSystemActions.openDeviceSettings(this)
+        }
+
+        binding.btnAppSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
         }
     }
 
