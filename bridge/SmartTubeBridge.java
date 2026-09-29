@@ -1,24 +1,38 @@
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.io.File;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
+import java.util.Locale;
 public class SmartTubeBridge {
     private static final String TAG = "SmartTubeBridge";
     public static final String PREFIX_SMARTTUBE = "smarttube:";
     private static volatile Context sContext;
+    private static volatile WeakReference<Activity> sCurrentActivity;
+    public static volatile Object sNavController;
     private static boolean sDataSeeded = false;
 
     // Cache of card ID -> intent/URL
@@ -41,7 +55,125 @@ public class SmartTubeBridge {
     public static void setContext(Context context) {
         if (context != null) {
             sContext = context.getApplicationContext();
+            if (context instanceof Activity) {
+                sCurrentActivity = new WeakReference<>((Activity) context);
+            }
+            applyAppLanguage(context);
             Log.i(TAG, "sContext initialized: " + sContext.getPackageName());
+        }
+    }
+
+    public static void setNavController(Object controller) {
+        if (controller != null) {
+            sNavController = controller;
+            Log.i(TAG, "sNavController initialized");
+        }
+    }
+
+    public static void navigateTo(String destination) {
+        if (sNavController == null) {
+            Log.w(TAG, "navigateTo called but sNavController is null");
+            return;
+        }
+        try {
+            Class<?> routeClass = null;
+            if ("home".equalsIgnoreCase(destination)) {
+                routeClass = Class.forName("app.flux.tv.core.navigation.FluxRoute$Home");
+            } else if ("mylist".equalsIgnoreCase(destination)) {
+                routeClass = Class.forName("app.flux.tv.core.navigation.FluxRoute$MyList");
+            } else if ("livetv".equalsIgnoreCase(destination)) {
+                routeClass = Class.forName("app.flux.tv.core.navigation.FluxRoute$LiveTv");
+            } else if ("settings".equalsIgnoreCase(destination)) {
+                routeClass = Class.forName("app.flux.tv.core.navigation.FluxRoute$Settings");
+            } else if ("search".equalsIgnoreCase(destination)) {
+                routeClass = Class.forName("app.flux.tv.core.navigation.FluxRoute$Search");
+            }
+            if (routeClass != null) {
+                Object instance = routeClass.getField("INSTANCE").get(null);
+                Method cMethod = sNavController.getClass().getMethod("c", Class.forName("gn1"), Class.forName("qs1"));
+                cMethod.invoke(sNavController, instance, null);
+                Log.i(TAG, "Successfully navigated to: " + destination);
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Navigation reflection error: " + destination, t);
+        }
+    }
+
+    public static void applyAppLanguage(Context context) {
+        if (context == null) context = getContext();
+        if (context == null) return;
+        try {
+            SharedPreferences sp = context.getSharedPreferences("flux_locale", Context.MODE_PRIVATE);
+            String lang = sp.getString("app_language", null);
+            if (lang == null || "SYSTEM".equalsIgnoreCase(lang)) {
+                lang = "RU";
+                sp.edit().putString("app_language", "RU").apply();
+            }
+
+            Locale locale;
+            if ("UK".equalsIgnoreCase(lang)) {
+                locale = new Locale("uk", "UA");
+            } else if ("EN".equalsIgnoreCase(lang)) {
+                locale = new Locale("en", "US");
+            } else {
+                locale = new Locale("ru", "RU");
+            }
+
+            Locale.setDefault(locale);
+            Resources res = context.getResources();
+            Configuration config = new Configuration(res.getConfiguration());
+            config.setLocale(locale);
+            res.updateConfiguration(config, res.getDisplayMetrics());
+
+            Context appCtx = context.getApplicationContext();
+            if (appCtx != null && appCtx != context) {
+                Resources appRes = appCtx.getResources();
+                Configuration appConfig = new Configuration(appRes.getConfiguration());
+                appConfig.setLocale(locale);
+                appRes.updateConfiguration(appConfig, appRes.getDisplayMetrics());
+            }
+
+            String lastLang = sp.getString("last_applied_lang", "");
+            if (!lang.equals(lastLang)) {
+                sp.edit().putString("last_applied_lang", lang).apply();
+                try {
+                    File dbFile = context.getDatabasePath("flux.db");
+                    if (dbFile != null && dbFile.exists()) {
+                        SQLiteDatabase db = SQLiteDatabase.openDatabase(
+                                dbFile.getPath(), null, SQLiteDatabase.OPEN_READWRITE
+                        );
+                        db.execSQL("DELETE FROM cached_page");
+                        db.close();
+                        Log.i(TAG, "Cleared cached_page table in flux.db for language switch: " + lang);
+                    }
+                } catch (Throwable t) {
+                    Log.e(TAG, "Failed to clear cached_page", t);
+                }
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Error applying app language", t);
+        }
+    }
+
+    public static void onLanguageChanged(Context context, Object langObj) {
+        if (context == null) context = getContext();
+        if (context == null) return;
+        try {
+            String langName = (langObj != null) ? langObj.toString() : "RU";
+            SharedPreferences sp = context.getSharedPreferences("flux_locale", Context.MODE_PRIVATE);
+            sp.edit().putString("app_language", langName).apply();
+            applyAppLanguage(context);
+
+            File dbFile = context.getDatabasePath("flux.db");
+            if (dbFile != null && dbFile.exists()) {
+                SQLiteDatabase db = SQLiteDatabase.openDatabase(
+                        dbFile.getPath(), null, SQLiteDatabase.OPEN_READWRITE
+                );
+                db.execSQL("DELETE FROM cached_page");
+                db.close();
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Error handling onLanguageChanged", t);
         }
     }
 
@@ -110,13 +242,9 @@ public class SmartTubeBridge {
     }
 
     /**
-     * Intercepts card click on Home Screen (q43 card).
-     * Returns true if handled (SmartTube card), false if normal movie.
+     * Intercepts card click on Home Screen (q43 card from ud6.smali).
      */
     public static boolean handleCardClick(q43 card, Object contextOrViewModel) {
-        Log.i(TAG, "handleCardClick ENTER: card=" + (card != null ? (card.b + " [id=" + card.a + ", e=" + card.e + "]") : "null")
-                + ", contextOrVM=" + (contextOrViewModel != null ? contextOrViewModel.getClass().getName() : "null"));
-
         if (card == null) return false;
         String id = card.a;
         if (id == null || !id.startsWith(PREFIX_SMARTTUBE)) {
@@ -124,7 +252,6 @@ public class SmartTubeBridge {
                 id = PREFIX_SMARTTUBE + sIdToIntent.get(card.e);
             } else if (card.b != null && (card.b.contains("SmartTube") || card.b.contains("Wylsacom") || card.b.contains("Kuplinov")
                     || (card.g != null && card.g.contains("SmartTube")))) {
-                Log.w(TAG, "Card didn't have smarttube prefix but matched SmartTube content: " + card.b);
                 id = PREFIX_SMARTTUBE + "launch";
             } else {
                 return false;
@@ -132,7 +259,6 @@ public class SmartTubeBridge {
         }
 
         Log.i(TAG, "handleCardClick intercepted SmartTube card: " + card.b + " id=" + id);
-
         Context ctx = sContext;
         if (ctx == null && contextOrViewModel instanceof Context) {
             ctx = ((Context) contextOrViewModel).getApplicationContext();
@@ -154,18 +280,21 @@ public class SmartTubeBridge {
     public static void launchIntentTarget(Context ctx, String target) {
         if (ctx == null) ctx = getContext();
         if (ctx == null) return;
-        try {
-            if ("launch".equals(target) || target == null || target.isEmpty()) {
-                launchSmartTube(ctx);
-                return;
-            }
 
-            Intent intent = null;
+        if (target == null || "launch".equals(target) || target.isEmpty()) {
+            launchSmartTube(ctx);
+            return;
+        }
+
+        try {
+            Intent intent;
             if (target.startsWith("intent:#Intent") || target.startsWith("#Intent")) {
                 intent = Intent.parseUri(target, Intent.URI_INTENT_SCHEME);
             } else if (target.startsWith("https://") || target.startsWith("http://")) {
                 intent = new Intent(Intent.ACTION_VIEW, Uri.parse(target));
             } else if (target.startsWith("vnd.youtube:")) {
+                intent = new Intent(Intent.ACTION_VIEW, Uri.parse(target));
+            } else if (target.startsWith("content://")) {
                 intent = new Intent(Intent.ACTION_VIEW, Uri.parse(target));
             } else {
                 intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=" + target));
@@ -203,6 +332,86 @@ public class SmartTubeBridge {
         }
     }
 
+    public static void syncChannels(Context context) {
+        if (context == null) context = getContext();
+        if (context == null) return;
+        try {
+            Intent intent = new Intent();
+            intent.setClassName(context, "app.flux.tv.MainActivity");
+            intent.setAction("app.flux.tv.ACTION_SYNC_CHANNELS");
+            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        } catch (Throwable t) {
+            Log.e(TAG, "Failed to send sync channels intent", t);
+        }
+    }
+
+    public static void syncEpg(Context context) {
+        if (context == null) context = getContext();
+        if (context == null) return;
+        try {
+            Intent intent = new Intent();
+            intent.setClassName(context, "app.flux.tv.MainActivity");
+            intent.setAction("app.flux.tv.ACTION_SYNC_EPG");
+            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        } catch (Throwable t) {
+            Log.e(TAG, "Failed to send sync EPG intent", t);
+        }
+    }
+
+    public static boolean handleIptvAddOrSync(final Object stateObj, final Object eventObj) {
+        Context ctx = (sCurrentActivity != null) ? sCurrentActivity.get() : null;
+        if (ctx == null) ctx = sContext;
+        if (ctx == null) return false;
+
+        final Context finalCtx = ctx;
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Activity act = (finalCtx instanceof Activity) ? (Activity) finalCtx : null;
+                    AlertDialog.Builder builder = new AlertDialog.Builder(
+                            (act != null) ? act : finalCtx,
+                            android.R.style.Theme_DeviceDefault_Dialog_Alert
+                    );
+                    builder.setTitle("Онлайн ТВ");
+                    CharSequence[] items = new CharSequence[] {
+                        "➕  Добавить плейлист",
+                        "⟳  Обновить плейлист и каналы",
+                        "⟳  Обновить телегид (EPG)"
+                    };
+                    builder.setItems(items, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (which == 0) {
+                                try {
+                                    Method m = stateObj.getClass().getMethod("setValue", Object.class);
+                                    m.invoke(stateObj, eventObj);
+                                } catch (Throwable t) {
+                                    Log.e(TAG, "Failed to invoke setValue", t);
+                                }
+                            } else if (which == 1) {
+                                syncChannels(finalCtx);
+                            } else if (which == 2) {
+                                syncEpg(finalCtx);
+                            }
+                        }
+                    });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                } catch (Throwable t) {
+                    Log.e(TAG, "Error displaying dialog, invoking original", t);
+                    try {
+                        Method m = stateObj.getClass().getMethod("setValue", Object.class);
+                        m.invoke(stateObj, eventObj);
+                    } catch (Throwable ignored) {}
+                }
+            }
+        });
+        return true;
+    }
+
     private static class ChannelInfo {
         long id;
         String name;
@@ -216,11 +425,11 @@ public class SmartTubeBridge {
     }
 
     /**
-     * Inserts the "Подписки" row into the catalog list.
+     * Inserts the "Подписки" row into the catalog list immediately AFTER Top 10 movies and series.
      */
     public static void insertSubscriptionsRow(Context context, ArrayList<j40> rows) {
         if (context != null) {
-            sContext = context.getApplicationContext();
+            setContext(context);
         }
         if (rows == null || context == null) return;
 
@@ -229,12 +438,18 @@ public class SmartTubeBridge {
 
             j40 subRow = loadSubscriptionsRow(context);
             if (subRow != null && subRow.b != null && !subRow.b.isEmpty()) {
-                int insertIndex = 0;
-                if (!rows.isEmpty()) {
-                    j40 first = rows.get(0);
-                    if (first.a != null && (first.a.contains("\u0441\u043f\u0438\u0441\u043e\u043a") || first.a.contains("List"))) {
-                        insertIndex = 1;
+                int insertIndex = 2;
+                int foundTopRows = 0;
+                for (int i = 0; i < rows.size(); i++) {
+                    j40 r = rows.get(i);
+                    String title = (r != null && r.a != null) ? r.a.toLowerCase() : "";
+                    if ((title.contains("\u0442\u043e\u043f") || title.contains("top")) && title.contains("10")) {
+                        insertIndex = i + 1;
+                        foundTopRows++;
                     }
+                }
+                if (foundTopRows == 0) {
+                    insertIndex = Math.min(2, rows.size());
                 }
                 if (insertIndex > rows.size()) insertIndex = rows.size();
                 rows.add(insertIndex, subRow);
@@ -248,237 +463,210 @@ public class SmartTubeBridge {
     private static j40 loadSubscriptionsRow(Context context) {
         ContentResolver cr = context.getContentResolver();
         Uri channelsUri = Uri.parse("content://android.media.tv/channel");
-        Uri programsUri = Uri.parse("content://android.media.tv/preview_program");
 
-        List<ChannelInfo> candidates = new ArrayList<>();
-        String ownPkg = context.getPackageName();
+        List<ChannelInfo> candidateChannels = new ArrayList<>();
 
-        try (Cursor c = cr.query(channelsUri,
-                new String[]{"_id", "package_name", "display_name"},
-                null, null, null)) {
-            if (c != null && c.moveToFirst()) {
-                do {
+        try (Cursor c = cr.query(channelsUri, new String[]{"_id", "display_name", "package_name"}, null, null, null)) {
+            if (c != null) {
+                while (c.moveToNext()) {
                     long id = c.getLong(0);
-                    String pkg = c.getString(1);
-                    String name = c.getString(2);
+                    String displayName = c.getString(1);
+                    String pkg = c.getString(2);
 
-                    boolean isRelevant = false;
-                    if (pkg != null) {
-                        if (pkg.equals(ownPkg)) {
-                            isRelevant = true;
-                        } else {
-                            for (String p : KNOWN_PACKAGES) {
-                                if (pkg.contains(p) || pkg.contains("smarttube") || pkg.contains("videomanager")) {
-                                    isRelevant = true;
-                                    break;
-                                }
+                    int priority = -1;
+                    if (displayName != null) {
+                        String lower = displayName.toLowerCase();
+                        if (lower.contains("подписк") || lower.contains("subscription")) {
+                            priority = 100;
+                        }
+                    }
+                    if (priority < 0 && pkg != null) {
+                        for (String kp : KNOWN_PACKAGES) {
+                            if (pkg.contains(kp)) {
+                                priority = 50;
+                                break;
                             }
                         }
                     }
-
-                    if (isRelevant) {
-                        int prio = 2;
-                        if (name != null) {
-                            String lower = name.toLowerCase();
-                            if (lower.contains("\u043f\u043e\u0434\u043f\u0438\u0441\u043a") || lower.contains("subscri")) {
-                                prio = 0;
-                            } else if (lower.contains("\u0440\u0435\u043a\u043e\u043c\u0435\u043d\u0434") || lower.contains("recommend")) {
-                                prio = 1;
-                            }
-                        }
-                        candidates.add(new ChannelInfo(id, name != null ? name : TITLE_SUBSCRIPTIONS, prio));
+                    if (priority > 0) {
+                        candidateChannels.add(new ChannelInfo(id, displayName, priority));
                     }
-                } while (c.moveToNext());
+                }
             }
         } catch (Exception e) {
-            Log.e(TAG, "Error querying channels", e);
+            Log.e(TAG, "Error querying tv channels", e);
         }
 
-        // Sort candidates so "Подписки" comes first
-        Collections.sort(candidates, new Comparator<ChannelInfo>() {
+        Collections.sort(candidateChannels, new Comparator<ChannelInfo>() {
             @Override
             public int compare(ChannelInfo o1, ChannelInfo o2) {
-                return Integer.compare(o1.priority, o2.priority);
+                return Integer.compare(o2.priority, o1.priority);
             }
         });
 
-        List<q43> items = new ArrayList<>();
-        String channelDisplayName = TITLE_SUBSCRIPTIONS;
-
-        // Query preview programs without selection (selection is forbidden by TvProvider)
-        for (ChannelInfo ch : candidates) {
-            try (Cursor c = cr.query(programsUri,
-                    new String[]{"_id", "channel_id", "title", "poster_art_uri", "intent_uri", "short_description", "content_id"},
-                    null, null, "weight DESC, _id DESC")) {
-                if (c != null && c.moveToFirst()) {
-                    do {
-                        long progChId = c.getLong(1);
-                        if (progChId != ch.id) {
-                            continue;
-                        }
-
-                        String title = c.getString(2);
-                        String poster = c.getString(3);
-                        String intentUri = c.getString(4);
-                        String desc = c.getString(5);
-                        String contentId = c.getString(6);
-
-                        String finalIntent = intentUri;
-                        if (finalIntent == null || finalIntent.isEmpty()) {
-                            if (contentId != null && !contentId.isEmpty()) {
-                                finalIntent = "https://www.youtube.com/watch?v=" + contentId;
-                            } else {
-                                finalIntent = "launch";
-                            }
-                        }
-
-                        if (title == null || title.isEmpty()) {
-                            title = "SmartTube";
-                        }
-                        if (desc == null) {
-                            desc = "SmartTube";
-                        }
-
-                        int cardId = -1000 - items.size();
-                        sIdToIntent.put(cardId, finalIntent);
-
-                        q43 card = new q43(
-                                PREFIX_SMARTTUBE + finalIntent,
-                                title,
-                                poster != null ? poster : "",
-                                null,
-                                cardId,
-                                false,
-                                desc,
-                                Collections.emptyList(),
-                                null, null, null,
-                                false,
-                                null, null, null
-                        );
-                        items.add(card);
-                    } while (c.moveToNext());
-
-                    if (!items.isEmpty()) {
-                        channelDisplayName = ch.name;
-                        Log.i(TAG, "Loaded " + items.size() + " programs from channel " + ch.id + " (" + channelDisplayName + ")");
-                        break;
-                    }
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error querying preview programs for channel " + ch.id, e);
+        for (ChannelInfo ch : candidateChannels) {
+            j40 row = loadProgramsForChannel(context, ch.id, ch.name != null ? ch.name : TITLE_SUBSCRIPTIONS);
+            if (row != null && row.b != null && !row.b.isEmpty()) {
+                return row;
             }
         }
 
-        if (items.isEmpty() && isSmartTubeInstalled(context)) {
-            int cardId = -999;
-            sIdToIntent.put(cardId, "launch");
-            q43 launchCard = new q43(
-                    PREFIX_SMARTTUBE + "launch",
-                    "SmartTube",
-                    "https://raw.githubusercontent.com/yuliskov/SmartTube/master/res/drawable/app_icon.png",
-                    null,
-                    cardId,
-                    false,
-                    SUBTITLE_LAUNCH,
-                    Collections.emptyList(),
-                    null, null, null,
-                    false,
-                    null, null, null
-            );
-            items.add(launchCard);
-            Log.i(TAG, "Added fallback launch card for SmartTube");
+        return createFallbackRow();
+    }
+
+    private static j40 loadProgramsForChannel(Context context, long channelId, String channelTitle) {
+        ContentResolver cr = context.getContentResolver();
+        Uri programsUri = Uri.parse("content://android.media.tv/preview_program")
+                .buildUpon()
+                .appendQueryParameter("channel", String.valueOf(channelId))
+                .build();
+
+        String[] projection = new String[]{
+            "_id", "title", "poster_art_uri", "intent_uri", "internal_provider_data"
+        };
+
+        ArrayList<q43> items = new ArrayList<>();
+
+        try (Cursor c = cr.query(programsUri, projection, null, null, "_id DESC LIMIT 30")) {
+            if (c != null) {
+                while (c.moveToNext()) {
+                    long progId = c.getLong(0);
+                    String title = c.getString(1);
+                    String poster = c.getString(2);
+                    String intentUri = c.getString(3);
+                    String providerData = c.getString(4);
+
+                    if (title == null || title.isEmpty()) continue;
+
+                    int cardId = -1000 - items.size();
+                    String finalIntent = (intentUri != null && !intentUri.isEmpty()) ? intentUri :
+                            ((providerData != null && !providerData.isEmpty()) ? providerData : "launch");
+                    sIdToIntent.put(cardId, finalIntent);
+
+                    q43 card = new q43(
+                            PREFIX_SMARTTUBE + finalIntent,
+                            title,
+                            poster != null ? poster : "",
+                            null,
+                            cardId,
+                            false,
+                            channelTitle,
+                            Collections.emptyList(),
+                            null, null, null,
+                            false,
+                            null, null, null
+                    );
+                    items.add(card);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error querying preview programs for channel " + channelId, e);
         }
 
-        if (items.isEmpty()) {
-            return null;
-        }
+        if (items.isEmpty()) return null;
 
-        return new j40(channelDisplayName, false, items, "smarttube_subscriptions");
+        Log.i(TAG, "Loaded " + items.size() + " items from SmartTube channel: " + channelTitle);
+        return new j40(
+            channelTitle,
+            false,
+            items,
+            ""
+        );
+    }
+
+    private static j40 createFallbackRow() {
+        ArrayList<q43> items = new ArrayList<>();
+        int cardId = -999;
+        sIdToIntent.put(cardId, "launch");
+
+        q43 launchCard = new q43(
+            PREFIX_SMARTTUBE + "launch",
+            "SmartTube",
+            "https://raw.githubusercontent.com/yuliskov/SmartTube/master/res/drawable/app_icon.png",
+            null,
+            cardId,
+            false,
+            SUBTITLE_LAUNCH,
+            Collections.emptyList(),
+            null, null, null,
+            false,
+            null, null, null
+        );
+        items.add(launchCard);
+
+        return new j40(
+            TITLE_SUBSCRIPTIONS,
+            false,
+            items,
+            ""
+        );
     }
 
     private static void ensureEmulatorTestData(Context context) {
         if (sDataSeeded) return;
         sDataSeeded = true;
 
-        String fp = Build.FINGERPRINT != null ? Build.FINGERPRINT : "";
-        String hw = Build.HARDWARE != null ? Build.HARDWARE : "";
-        boolean isEmulator = fp.contains("generic") || hw.contains("goldfish") || hw.contains("ranchu");
-
-        if (!isEmulator) {
-            return;
-        }
+        if (isSmartTubeInstalled(context)) return;
 
         try {
             ContentResolver cr = context.getContentResolver();
             Uri channelsUri = Uri.parse("content://android.media.tv/channel");
-            Uri programsUri = Uri.parse("content://android.media.tv/preview_program");
-            String ownPkg = context.getPackageName();
 
-            long chId = -1;
-            try (Cursor c = cr.query(channelsUri, new String[]{"_id", "package_name"}, null, null, null)) {
+            long channelId = -1;
+            try (Cursor c = cr.query(channelsUri, new String[]{"_id"}, "display_name=?", new String[]{TITLE_SUBSCRIPTIONS}, null)) {
                 if (c != null && c.moveToFirst()) {
-                    do {
-                        long curId = c.getLong(0);
-                        String pkg = c.getString(1);
-                        if (ownPkg.equals(pkg) || "org.smarttube.stable".equals(pkg)) {
-                            // Check if this channel has programs
-                            try (Cursor pc = cr.query(programsUri, new String[]{"_id", "channel_id"}, null, null, null)) {
-                                if (pc != null && pc.moveToFirst()) {
-                                    int count = 0;
-                                    do {
-                                        if (pc.getLong(1) == curId) count++;
-                                    } while (pc.moveToNext());
-
-                                    if (count > 0) {
-                                        chId = curId;
-                                        Log.i(TAG, "Emulator channel " + chId + " already has " + count + " programs");
-                                        return;
-                                    }
-                                }
-                            }
-                            if (chId == -1) chId = curId;
-                        }
-                    } while (c.moveToNext());
+                    channelId = c.getLong(0);
                 }
             }
 
-            if (chId == -1) {
+            if (channelId == -1) {
                 ContentValues cv = new ContentValues();
-                cv.put("package_name", ownPkg);
                 cv.put("type", "TYPE_PREVIEW");
                 cv.put("display_name", TITLE_SUBSCRIPTIONS);
-                cv.put("app_link_intent_uri", "https://www.youtube.com");
-                Uri chUri = cr.insert(channelsUri, cv);
-                if (chUri == null) {
-                    Log.w(TAG, "Could not insert channel for emulator test data");
-                    return;
+                cv.put("description", "SmartTube Subscriptions");
+                cv.put("package_name", "org.smarttube.stable");
+                cv.put("input_id", "app.flux.tv/.SmartTubeBridge");
+                Uri inserted = cr.insert(channelsUri, cv);
+                if (inserted != null) {
+                    channelId = ContentUris.parseId(inserted);
+                    Log.i(TAG, "Seeded test channel: " + channelId);
                 }
-                chId = ContentUris.parseId(chUri);
             }
 
-            String[][] mockVideos = {
-                {"Wylsacom: \u041e\u0431\u0437\u043e\u0440 \u0442\u043e\u043f\u043e\u0432\u044b\u0445 \u043d\u043e\u0432\u0438\u043d\u043e\u043a", "https://i.ytimg.com/vi/jNQXAC9IVRw/mqdefault.jpg", "https://www.youtube.com/watch?v=jNQXAC9IVRw", "Wylsacom"},
-                {"Kuplinov \u25ba Play: \u041f\u0440\u043e\u0445\u043e\u0436\u0434\u0435\u043d\u0438\u0435 \u043d\u043e\u0432\u0438\u043d\u043a\u0438", "https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg", "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "Kuplinov \u25ba Play"},
-                {"AcademeG: \u0422\u0435\u0441\u0442-\u0434\u0440\u0430\u0439\u0432 \u0432\u0435\u043a\u0430", "https://i.ytimg.com/vi/9bZkp7q19f0/mqdefault.jpg", "https://www.youtube.com/watch?v=9bZkp7q19f0", "AcademeG"},
-                {"itpedia: \u0411\u043e\u043b\u044c\u0448\u043e\u0439 \u0440\u0430\u0437\u0431\u043e\u0440 \u0433\u043e\u0434\u0430", "https://i.ytimg.com/vi/kJQP7kiw5Fk/mqdefault.jpg", "https://www.youtube.com/watch?v=kJQP7kiw5Fk", "itpedia"},
-                {"RedLetterMedia: Half in the Bag", "https://i.ytimg.com/vi/fJ9rUzIMcZQ/mqdefault.jpg", "https://www.youtube.com/watch?v=fJ9rUzIMcZQ", "RedLetterMedia"},
-                {"ThePrimeTime: Next-Gen Dev Setup", "https://i.ytimg.com/vi/RgKAFK5djSk/mqdefault.jpg", "https://www.youtube.com/watch?v=RgKAFK5djSk", "ThePrimeTime"}
-            };
+            if (channelId != -1) {
+                Uri programsUri = Uri.parse("content://android.media.tv/preview_program")
+                        .buildUpon()
+                        .appendQueryParameter("channel", String.valueOf(channelId))
+                        .build();
+                int count = 0;
+                try (Cursor c = cr.query(programsUri, new String[]{"_id"}, null, null, null)) {
+                    if (c != null) count = c.getCount();
+                }
 
-            for (int i = 0; i < mockVideos.length; i++) {
-                ContentValues pv = new ContentValues();
-                pv.put("channel_id", chId);
-                pv.put("type", 4); // 4 = TYPE_CLIP
-                pv.put("title", mockVideos[i][0]);
-                pv.put("poster_art_uri", mockVideos[i][1]);
-                pv.put("intent_uri", mockVideos[i][2]);
-                pv.put("short_description", mockVideos[i][3]);
-                pv.put("weight", 100 - i);
-                cr.insert(programsUri, pv);
+                if (count == 0) {
+                    insertTestProgram(cr, channelId, "Wylsacom: \u041e\u0431\u0437\u043e\u0440 \u043d\u043e\u0432\u0438\u043d\u043e\u043a", "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg", "dQw4w9WgXcQ");
+                    insertTestProgram(cr, channelId, "Kuplinov \u25ba Play: \u041f\u0440\u043e\u0445\u043e\u0436\u0434\u0435\u043d\u0438\u0435 \u043d\u043e\u0432\u0438\u043d\u043a\u0438", "https://i.ytimg.com/vi/9bZkp7q19f0/hqdefault.jpg", "9bZkp7q19f0");
+                    insertTestProgram(cr, channelId, "AcademeG: \u0422\u0435\u0441\u0442-\u0434\u0440\u0430\u0439\u0432 \u0432\u0435\u043a\u0430", "https://i.ytimg.com/vi/kJQP7kiw5Fk/hqdefault.jpg", "kJQP7kiw5Fk");
+                    insertTestProgram(cr, channelId, "itpedia: \u0411\u043e\u043b\u044c\u0448\u043e\u0439 \u0440\u0430\u0437\u0431\u043e\u0440 \u0433\u043e\u0434\u0430", "https://i.ytimg.com/vi/fJ9rUzIMcZQ/hqdefault.jpg", "fJ9rUzIMcZQ");
+                    insertTestProgram(cr, channelId, "RedLetterMedia: Half in the Bag", "https://i.ytimg.com/vi/L_LUpnjgPso/hqdefault.jpg", "L_LUpnjgPso");
+                    insertTestProgram(cr, channelId, "ThePrimeTime: Next-Gen Dev Setup", "https://i.ytimg.com/vi/CevxZvSJLk8/hqdefault.jpg", "CevxZvSJLk8");
+                    Log.i(TAG, "Seeded 6 test preview programs for channel: " + channelId);
+                }
             }
-            Log.i(TAG, "Seeded emulator test data with 6 videos for channel " + chId);
         } catch (Exception e) {
-            Log.e(TAG, "Failed seeding emulator data", e);
+            Log.e(TAG, "Failed seeding test data", e);
         }
+    }
+
+    private static void insertTestProgram(ContentResolver cr, long channelId, String title, String poster, String videoId) {
+        try {
+            ContentValues cv = new ContentValues();
+            cv.put("channel_id", channelId);
+            cv.put("title", title);
+            cv.put("poster_art_uri", poster);
+            cv.put("intent_uri", "intent:#Intent;action=android.intent.action.VIEW;data=https://www.youtube.com/watch?v=" + videoId + ";package=org.smarttube.stable;component=org.smarttube.stable/com.liskovsoft.smartyoutubetv2.tv.ui.main.MainActivity;end");
+            cv.put("internal_provider_data", videoId);
+            cr.insert(Uri.parse("content://android.media.tv/preview_program"), cv);
+        } catch (Exception ignored) {}
     }
 }
