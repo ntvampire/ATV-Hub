@@ -10,6 +10,6 @@ set "ANDROID_HOME=D:\Projects\AndroidSDK"
 set "PATH=D:\Projects\AndroidSDK\platform-tools;D:\Projects\AndroidSDK\emulator;%PATH%"
 
 cd /d "D:\Projects\AndroidSDK\emulator"
-emulator.exe -avd ATV_9 -gpu auto -accel on
+emulator.exe -avd ATV_11 -gpu auto -accel on
 
 pause

@@ -6,16 +6,16 @@ echo ====================================================
 echo.
 
 set "ADB=D:\Projects\AndroidSDK\platform-tools\adb.exe"
-set "APK=d:\Projects\ATV-Hub\ATV-Hub-v1.0.1.apk"
+set "APK=d:\Projects\ATV-Hub\dist\atv_hub.apk"
 
 echo Waiting for emulator device...
 "%ADB%" wait-for-device
 
 echo Installing %APK%...
-"%ADB%" install -r "%APK%"
+"%ADB%" install -r -d "%APK%"
 
 echo Launching ATV Hub on TV screen...
-"%ADB%" shell am start -n com.atvhub.launcher/.ui.MainActivity
+"%ADB%" shell monkey -p app.flux.tv -c android.intent.category.LAUNCHER 1
 
 echo.
 echo ====================================================
