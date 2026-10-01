@@ -5,44 +5,35 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.PorterDuff
-import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.media.tv.TvContract
 import android.media.tv.TvInputInfo
 import android.media.tv.TvInputManager
-import android.net.Uri
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
-import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.atvhub.tv.R
 import ru.atvhub.tv.databinding.FragmentAppsBinding
+import ru.atvhub.tv.model.AppItem
+import ru.atvhub.tv.ui.adapter.AppCardAdapter
 
 class AppsFragment : Fragment() {
 
     private var _binding: FragmentAppsBinding? = null
     private val binding get() = _binding!!
-
-    data class AppEntry(
-        val packageName: String,
-        val label: String,
-        val icon: Drawable,
-        val hasBanner: Boolean
-    )
 
     data class TvInputEntry(
         val id: String,
@@ -50,9 +41,9 @@ class AppsFragment : Fragment() {
         val type: Int
     )
 
-    private val appList = mutableListOf<AppEntry>()
+    private val appList = mutableListOf<AppItem>()
     private val inputList = mutableListOf<TvInputEntry>()
-    private var firstAppCard: View? = null
+    private var appsAdapter: AppCardAdapter? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -65,7 +56,24 @@ class AppsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        setupRecyclerView()
         loadData()
+    }
+
+    private fun setupRecyclerView() {
+        binding.recyclerApps.layoutManager = GridLayoutManager(requireContext(), 4)
+        appsAdapter = AppCardAdapter(appList) { app ->
+            val pm = requireContext().packageManager
+            val intent = pm.getLeanbackLaunchIntentForPackage(app.packageName)
+                ?: pm.getLaunchIntentForPackage(app.packageName)
+            if (intent != null) {
+                startActivity(intent)
+            } else {
+                Toast.makeText(requireContext(), "Не удалось открыть ${app.label}", Toast.LENGTH_SHORT).show()
+            }
+        }
+        binding.recyclerApps.adapter = appsAdapter
     }
 
     private fun loadData() {
@@ -75,19 +83,19 @@ class AppsFragment : Fragment() {
 
             appList.clear()
             appList.addAll(apps)
+            appsAdapter?.notifyDataSetChanged()
+
             inputList.clear()
             inputList.addAll(inputs)
-
-            populateAppsGrid()
             populateTvInputs()
         }
     }
 
-    private fun queryApps(): List<AppEntry> {
+    private fun queryApps(): List<AppItem> {
         val pm = requireContext().packageManager
         val selfPkg = requireContext().packageName
 
-        val rawList = mutableListOf<AppEntry>()
+        val rawList = mutableListOf<AppItem>()
         val seen = mutableSetOf<String>()
 
         // 1. Leanback Apps
@@ -105,9 +113,15 @@ class AppsFragment : Fragment() {
             val icon = banner ?: try { ri.activityInfo.loadIcon(pm) } catch (_: Exception) { null }
             val label = try { ri.loadLabel(pm).toString() } catch (_: Exception) { pkg }
 
-            if (icon != null) {
-                rawList.add(AppEntry(pkg, label, icon, banner != null))
-            }
+            rawList.add(
+                AppItem(
+                    packageName = pkg,
+                    activityName = ri.activityInfo.name,
+                    label = label,
+                    icon = icon,
+                    banner = banner
+                )
+            )
         }
 
         // 2. Standard Launcher Apps fallback
@@ -120,9 +134,15 @@ class AppsFragment : Fragment() {
 
             val icon = try { ri.loadIcon(pm) } catch (_: Exception) { null }
             val label = try { ri.loadLabel(pm).toString() } catch (_: Exception) { pkg }
-            if (icon != null) {
-                rawList.add(AppEntry(pkg, label, icon, false))
-            }
+            rawList.add(
+                AppItem(
+                    packageName = pkg,
+                    activityName = ri.activityInfo.name,
+                    label = label,
+                    icon = icon,
+                    banner = null
+                )
+            )
         }
 
         rawList.sortBy { it.label.lowercase() }
@@ -160,107 +180,6 @@ class AppsFragment : Fragment() {
         return list
     }
 
-    private fun populateAppsGrid() {
-        val grid = binding.gridApps
-        grid.removeAllViews()
-
-        val cardWidth = dp(240)
-        val cardHeight = dp(135)
-        val cardRadius = dp(10).toFloat()
-        val margin = dp(12)
-
-        for (i in appList.indices) {
-            val app = appList[i]
-
-            val lp = GridLayout.LayoutParams().apply {
-                width = cardWidth
-                height = ViewGroup.LayoutParams.WRAP_CONTENT
-                setMargins(margin, margin, margin, margin)
-            }
-
-            val wrapper = LinearLayout(requireContext()).apply {
-                orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER_HORIZONTAL
-                layoutParams = lp
-            }
-
-            val card = FrameLayout(requireContext()).apply {
-                isFocusable = true
-                layoutParams = LinearLayout.LayoutParams(cardWidth, cardHeight)
-            }
-
-            val normalBg = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = cardRadius
-                setColor(Color.parseColor("#151922"))
-                setStroke(dp(1), Color.parseColor("#232A38"))
-            }
-
-            val focusedBg = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = cardRadius
-                setColor(Color.parseColor("#1E2433"))
-                setStroke(dp(2.5f), Color.parseColor("#7C4DFF"))
-            }
-
-            card.background = normalBg
-
-            val img = ImageView(requireContext()).apply {
-                setImageDrawable(app.icon)
-                scaleType = if (app.hasBanner) ImageView.ScaleType.FIT_XY else ImageView.ScaleType.FIT_CENTER
-                layoutParams = FrameLayout.LayoutParams(
-                    if (app.hasBanner) FrameLayout.LayoutParams.MATCH_PARENT else dp(56),
-                    if (app.hasBanner) FrameLayout.LayoutParams.MATCH_PARENT else dp(56),
-                    Gravity.CENTER
-                )
-            }
-            card.addView(img)
-
-            val label = TextView(requireContext()).apply {
-                text = app.label
-                setTextColor(Color.parseColor("#94A3B8"))
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-                setSingleLine(true)
-                ellipsize = android.text.TextUtils.TruncateAt.END
-                gravity = Gravity.CENTER
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    topMargin = dp(8)
-                }
-            }
-
-            card.setOnFocusChangeListener { _, hasFocus ->
-                if (hasFocus) {
-                    card.background = focusedBg
-                    label.setTextColor(Color.parseColor("#F1F5F9"))
-                    wrapper.scaleX = 1.05f
-                    wrapper.scaleY = 1.05f
-                } else {
-                    card.background = normalBg
-                    label.setTextColor(Color.parseColor("#94A3B8"))
-                    wrapper.scaleX = 1.0f
-                    wrapper.scaleY = 1.0f
-                }
-            }
-
-            card.setOnClickListener {
-                val intent = requireContext().packageManager.getLeanbackLaunchIntentForPackage(app.packageName)
-                    ?: requireContext().packageManager.getLaunchIntentForPackage(app.packageName)
-                if (intent != null) {
-                    startActivity(intent)
-                }
-            }
-
-            wrapper.addView(card)
-            wrapper.addView(label)
-            grid.addView(wrapper)
-
-            if (i == 0) firstAppCard = card
-        }
-    }
-
     private fun populateTvInputs() {
         val container = binding.containerTvInputs
         container.removeAllViews()
@@ -275,6 +194,7 @@ class AppsFragment : Fragment() {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
                 isFocusable = true
+                isFocusableInTouchMode = true
                 layoutParams = LinearLayout.LayoutParams(cardWidth, cardHeight).apply {
                     setMargins(margin, margin, margin, margin)
                 }
@@ -358,7 +278,8 @@ class AppsFragment : Fragment() {
     }
 
     fun requestInitialFocus() {
-        firstAppCard?.requestFocus()
+        val firstChild = binding.recyclerApps.layoutManager?.findViewByPosition(0)
+        firstChild?.requestFocus() ?: binding.recyclerApps.requestFocus()
     }
 
     private fun dp(value: Float): Int {

@@ -35,13 +35,13 @@
             android:textSize="@dimen/text_size_body" />
 
         <!-- 4-колоночная сетка приложений (16:9) -->
-        <GridLayout
-            android:id="@+id/grid_apps"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_apps"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:alignmentMode="alignMargins"
-            android:columnCount="4"
-            android:columnOrderPreserved="true" />
+            android:nestedScrollingEnabled="false"
+            android:clipToPadding="false"
+            android:clipChildren="false" />
 
         <!-- Секция ТВ-входов (HDMI, AV) -->
         <TextView

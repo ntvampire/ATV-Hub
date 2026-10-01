@@ -1,5 +1,6 @@
 package ru.atvhub.tv.ui.adapter
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -22,8 +23,11 @@ class AppCardAdapter(
             }
 
             binding.root.setOnFocusChangeListener { view, hasFocus ->
-                val scale = if (hasFocus) 1.04f else 1.0f
-                view.animate().scaleX(scale).scaleY(scale).setDuration(100).start()
+                val scale = if (hasFocus) 1.05f else 1.0f
+                view.animate().scaleX(scale).scaleY(scale).setDuration(120).start()
+                binding.tvAppLabel.setTextColor(
+                    if (hasFocus) Color.parseColor("#F1F5F9") else Color.parseColor("#94A3B8")
+                )
             }
         }
     }
@@ -45,11 +49,11 @@ class AppCardAdapter(
             if (app.banner != null) {
                 ivAppBanner.setImageDrawable(app.banner)
                 ivAppBanner.visibility = View.VISIBLE
-                ivAppIconFallback.visibility = View.GONE
+                ivAppIcon.visibility = View.GONE
             } else {
                 ivAppBanner.visibility = View.GONE
-                ivAppIconFallback.setImageDrawable(app.icon)
-                ivAppIconFallback.visibility = View.VISIBLE
+                ivAppIcon.setImageDrawable(app.icon)
+                ivAppIcon.visibility = View.VISIBLE
             }
         }
     }
