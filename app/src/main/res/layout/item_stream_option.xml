@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/bg_sidebar_item"
+    android:clickable="true"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="12dp">
+
+    <!-- Источник (VK Видео / Rutube / Kodik) -->
+    <TextView
+        android:id="@+id/tv_stream_source"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:textColor="@color/accent_purple"
+        android:textSize="@dimen/text_size_body"
+        android:textStyle="bold" />
+
+    <!-- Озвучка / Дорожка -->
+    <TextView
+        android:id="@+id/tv_stream_audio"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/text_size_body" />
+
+    <!-- Качество (1080p, 720p, 4K) -->
+    <TextView
+        android:id="@+id/tv_stream_quality"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/badge_background"
+        android:paddingStart="8dp"
+        android:paddingTop="3dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="3dp"
+        android:textColor="@color/badge_text"
+        android:textSize="@dimen/text_size_badge"
+        android:textStyle="bold" />
+
+</LinearLayout>

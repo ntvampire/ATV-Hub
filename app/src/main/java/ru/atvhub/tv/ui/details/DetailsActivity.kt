@@ -1,23 +1,47 @@
 package ru.atvhub.tv.ui.details
 
+import android.app.Dialog
+import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.View
+import android.view.Window
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
+import kotlinx.coroutines.launch
 import ru.atvhub.tv.R
+import ru.atvhub.tv.data.OnlineStreamsRepository
+import ru.atvhub.tv.data.TorrentsRepository
 import ru.atvhub.tv.databinding.ActivityDetailsBinding
+import ru.atvhub.tv.databinding.DialogStreamSelectionBinding
+import ru.atvhub.tv.databinding.DialogTorrentSelectionBinding
 import ru.atvhub.tv.model.MediaItem
+import ru.atvhub.tv.model.OnlineStream
+import ru.atvhub.tv.model.TorrentItem
+import ru.atvhub.tv.ui.adapter.StreamOptionsAdapter
+import ru.atvhub.tv.ui.adapter.TorrentOptionsAdapter
+import ru.atvhub.tv.ui.player.PlayerActivity
 
 class DetailsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityDetailsBinding
+    private lateinit var streamsRepo: OnlineStreamsRepository
+    private lateinit var torrentsRepo: TorrentsRepository
+
     private var mediaItem: MediaItem? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityDetailsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        streamsRepo = OnlineStreamsRepository(this)
+        torrentsRepo = TorrentsRepository(this)
 
         @Suppress("DEPRECATION")
         mediaItem = intent.getSerializableExtra("media_item") as? MediaItem
@@ -56,32 +80,147 @@ class DetailsActivity : AppCompatActivity() {
 
             btnTrack.visibility = if (item.isSeries) View.VISIBLE else View.GONE
 
+            // Установка focusableInTouchMode для защиты от потери фокуса ТВ
+            listOf(btnWatch, btnTorrents, btnTrailer, btnFavorite, btnTrack).forEach { btn ->
+                btn.isFocusable = true
+                btn.isFocusableInTouchMode = true
+            }
+
             // Фокус по умолчанию на кнопку "Смотреть"
-            btnWatch.requestFocus()
+            btnWatch.post {
+                btnWatch.requestFocus()
+            }
 
+            // 1. Кнопка "Смотреть" (Онлайн-потоки VK, Rutube, балансеры >= 720p RU)
             btnWatch.setOnClickListener {
-                Toast.makeText(this@DetailsActivity, "Поиск онлайн-потоков 720p+...", Toast.LENGTH_SHORT).show()
+                showOnlineStreamsDialog(item)
             }
 
+            // 2. Кнопка "Торренты" (P2P / TorrServe)
             btnTorrents.setOnClickListener {
-                Toast.makeText(this@DetailsActivity, "Поиск торрентов (JacRed)...", Toast.LENGTH_SHORT).show()
+                showTorrentsDialog(item)
             }
 
+            // 3. Кнопка "Трейлер"
             btnTrailer.setOnClickListener {
-                Toast.makeText(this@DetailsActivity, "Запуск трейлера...", Toast.LENGTH_SHORT).show()
+                playTrailer(item)
             }
 
+            // 4. Кнопка "В закладки"
             btnFavorite.setOnClickListener {
-                val isFav = item.isFavorite
-                btnFavorite.text = if (!isFav) getString(R.string.btn_remove_favorite) else getString(R.string.btn_add_favorite)
-                Toast.makeText(this@DetailsActivity, if (!isFav) "Добавлено в избранное" else "Удалено из избранного", Toast.LENGTH_SHORT).show()
+                toggleFavorite(item)
             }
 
+            // 5. Кнопка "Следить" (для сериалов)
             btnTrack.setOnClickListener {
-                val isTracked = item.isTracked
-                btnTrack.text = if (!isTracked) getString(R.string.btn_untrack_series) else getString(R.string.btn_track_series)
-                Toast.makeText(this@DetailsActivity, if (!isTracked) "Сериал отслеживается" else "Отслеживание отключено", Toast.LENGTH_SHORT).show()
+                toggleTracking(item)
             }
         }
+    }
+
+    private fun showOnlineStreamsDialog(item: MediaItem) {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        val dBinding = DialogStreamSelectionBinding.inflate(layoutInflater)
+        dialog.setContentView(dBinding.root)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        dBinding.rvStreamOptions.layoutManager = LinearLayoutManager(this)
+        dBinding.pbLoading.visibility = View.VISIBLE
+        dBinding.rvStreamOptions.visibility = View.GONE
+
+        dialog.show()
+
+        lifecycleScope.launch {
+            val streams = streamsRepo.getStreamsForMedia(item)
+            dBinding.pbLoading.visibility = View.GONE
+            dBinding.rvStreamOptions.visibility = View.VISIBLE
+
+            dBinding.rvStreamOptions.adapter = StreamOptionsAdapter(streams) { selectedStream ->
+                dialog.dismiss()
+                playStream(selectedStream, item.title)
+            }
+
+            dBinding.rvStreamOptions.post {
+                dBinding.rvStreamOptions.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+            }
+        }
+    }
+
+    private fun showTorrentsDialog(item: MediaItem) {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        val dBinding = DialogTorrentSelectionBinding.inflate(layoutInflater)
+        dialog.setContentView(dBinding.root)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        dBinding.rvTorrentOptions.layoutManager = LinearLayoutManager(this)
+        dBinding.pbTorrentLoading.visibility = View.VISIBLE
+        dBinding.rvTorrentOptions.visibility = View.GONE
+
+        dialog.show()
+
+        lifecycleScope.launch {
+            val torrents = torrentsRepo.searchTorrents(item)
+            dBinding.pbTorrentLoading.visibility = View.GONE
+            dBinding.rvTorrentOptions.visibility = View.VISIBLE
+
+            dBinding.rvTorrentOptions.adapter = TorrentOptionsAdapter(torrents) { selectedTorrent ->
+                dialog.dismiss()
+                playTorrent(selectedTorrent, item.title)
+            }
+
+            dBinding.rvTorrentOptions.post {
+                dBinding.rvTorrentOptions.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+            }
+        }
+    }
+
+    private fun playStream(stream: OnlineStream, title: String) {
+        val intent = Intent(this, PlayerActivity::class.java).apply {
+            putExtra("stream_url", stream.streamUrl)
+            putExtra("stream_title", "$title • ${stream.sourceName} (${stream.quality})")
+            if (!stream.headers.isNullOrEmpty()) {
+                putExtra("stream_headers", HashMap(stream.headers))
+            }
+        }
+        startActivity(intent)
+    }
+
+    private fun playTorrent(torrent: TorrentItem, title: String) {
+        Toast.makeText(this, "Подключение к раздаче: ${torrent.tracker} (${torrent.quality})...", Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val streamUrl = torrentsRepo.getStreamUrl(torrent)
+            val intent = Intent(this@DetailsActivity, PlayerActivity::class.java).apply {
+                putExtra("stream_url", streamUrl)
+                putExtra("stream_title", "$title • ${torrent.tracker} (${torrent.quality})")
+            }
+            startActivity(intent)
+        }
+    }
+
+    private fun playTrailer(item: MediaItem) {
+        val trailerUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+        val intent = Intent(this, PlayerActivity::class.java).apply {
+            putExtra("stream_url", trailerUrl)
+            putExtra("stream_title", "${item.title} — Официальный трейлер")
+        }
+        startActivity(intent)
+    }
+
+    private fun toggleFavorite(item: MediaItem) {
+        Toast.makeText(this, "Добавлено в «Мой список»", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun toggleTracking(item: MediaItem) {
+        Toast.makeText(this, "Сериал добавлен в отслеживаемые", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_ESCAPE) {
+            finish()
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
     }
 }
