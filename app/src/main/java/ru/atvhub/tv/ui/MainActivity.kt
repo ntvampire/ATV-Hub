@@ -22,6 +22,7 @@ import ru.atvhub.tv.databinding.ActivityMainBinding
 import ru.atvhub.tv.system.TvSystemActions
 import ru.atvhub.tv.ui.apps.AppsFragment
 import ru.atvhub.tv.ui.home.HomeFragment
+import ru.atvhub.tv.ui.livetv.LiveTvFragment
 import ru.atvhub.tv.ui.section.GenericSectionFragment
 
 class MainActivity : AppCompatActivity() {
@@ -76,11 +77,7 @@ class MainActivity : AppCompatActivity() {
             "Избранное, закладки и история просмотров",
             R.drawable.ic_nav_mylist
         )
-        val liveTvFrag = GenericSectionFragment.newInstance(
-            getString(R.string.nav_livetv),
-            "IPTV плейлисты, каналы и программа передач (EPG)",
-            R.drawable.ic_nav_livetv
-        )
+        val liveTvFrag = LiveTvFragment()
         val settingsFrag = GenericSectionFragment.newInstance(
             getString(R.string.nav_settings),
             "Настройки плеера, движка TorrServer, выбор языка и автообновление",
@@ -161,6 +158,7 @@ class MainActivity : AppCompatActivity() {
             when (targetFragment) {
                 is HomeFragment -> targetFragment.requestInitialFocus()
                 is AppsFragment -> targetFragment.requestInitialFocus()
+                is LiveTvFragment -> targetFragment.requestInitialFocus()
                 else -> targetFragment.view?.requestFocus()
             }
         }
@@ -200,6 +198,7 @@ class MainActivity : AppCompatActivity() {
         when (targetFragment) {
             is HomeFragment -> targetFragment.requestInitialFocus()
             is AppsFragment -> targetFragment.requestInitialFocus()
+            is LiveTvFragment -> targetFragment.requestInitialFocus()
             else -> targetFragment?.view?.requestFocus()
         }
     }
