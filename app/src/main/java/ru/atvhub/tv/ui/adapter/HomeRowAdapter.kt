@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import ru.atvhub.tv.data.SmartTubeVideo
 import ru.atvhub.tv.databinding.ItemHomeRowBinding
 import ru.atvhub.tv.model.AppItem
 import ru.atvhub.tv.model.HomeRow
@@ -13,6 +14,7 @@ import ru.atvhub.tv.model.RowType
 class HomeRowAdapter(
     private val rows: List<HomeRow>,
     private val onMovieClick: (MediaItem) -> Unit,
+    private val onSmartTubeClick: (SmartTubeVideo) -> Unit,
     private val onAppClick: (AppItem) -> Unit
 ) : RecyclerView.Adapter<HomeRowAdapter.ViewHolder>() {
 
@@ -44,10 +46,20 @@ class HomeRowAdapter(
                     val apps = row.items as? List<AppItem> ?: emptyList()
                     rvRowItems.adapter = AppCardAdapter(apps, onAppClick)
                 }
+                RowType.SMARTTUBE_SUBS -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val subs = row.items as? List<SmartTubeVideo> ?: emptyList()
+                    rvRowItems.adapter = SmartTubeCardAdapter(subs, onSmartTubeClick)
+                }
+                RowType.TOP_MOVIES, RowType.TOP_SERIES -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val movies = row.items as? List<MediaItem> ?: emptyList()
+                    rvRowItems.adapter = MovieCardAdapter(movies, showRank = true, onMovieClick)
+                }
                 else -> {
                     @Suppress("UNCHECKED_CAST")
                     val movies = row.items as? List<MediaItem> ?: emptyList()
-                    rvRowItems.adapter = MovieCardAdapter(movies, onMovieClick)
+                    rvRowItems.adapter = MovieCardAdapter(movies, showRank = false, onMovieClick)
                 }
             }
         }

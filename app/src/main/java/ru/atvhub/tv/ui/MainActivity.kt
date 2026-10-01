@@ -4,8 +4,11 @@ import android.app.AlertDialog
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.os.Bundle
+import android.view.FocusFinder
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
@@ -47,6 +50,11 @@ class MainActivity : AppCompatActivity() {
         setupSidebar()
         initFragments()
         switchSection(NavSection.HOME, requestFocusOnContent = false)
+
+        // Стартовый фокус на пункте Главная в сайдбаре
+        binding.root.post {
+            binding.navItemHome.requestFocus()
+        }
 
         checkDefaultLauncherPrompt()
         checkForUpdatesInBackground()
@@ -108,6 +116,9 @@ class MainActivity : AppCompatActivity() {
         icon: ImageView,
         section: NavSection
     ) {
+        item.isFocusable = true
+        item.isFocusableInTouchMode = true
+
         item.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
                 icon.setColorFilter(COLOR_FOCUSED, PorterDuff.Mode.SRC_IN)
@@ -173,6 +184,96 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun getActiveSidebarItem(): View {
+        return when (currentSection) {
+            NavSection.SEARCH -> binding.navItemSearch
+            NavSection.HOME -> binding.navItemHome
+            NavSection.MY_LIST -> binding.navItemMylist
+            NavSection.LIVE_TV -> binding.navItemLivetv
+            NavSection.APPS -> binding.navItemApps
+            NavSection.SETTINGS -> binding.navItemSettings
+        }
+    }
+
+    private fun focusCurrentSectionContent() {
+        val targetFragment = fragmentsMap[currentSection]
+        when (targetFragment) {
+            is HomeFragment -> targetFragment.requestInitialFocus()
+            is AppsFragment -> targetFragment.requestInitialFocus()
+            else -> targetFragment?.view?.requestFocus()
+        }
+    }
+
+    private fun isDescendantOf(child: View, parent: ViewGroup): Boolean {
+        var current: View? = child
+        while (current != null) {
+            if (current == parent) return true
+            current = current.parent as? View
+        }
+        return false
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN) {
+            when (event.keyCode) {
+                KeyEvent.KEYCODE_DPAD_LEFT -> {
+                    val current = currentFocus
+                    if (current != null && isDescendantOf(current, binding.contentContainer)) {
+                        val next = FocusFinder.getInstance().findNextFocus(
+                            binding.rootLayout,
+                            current,
+                            View.FOCUS_LEFT
+                        )
+                        if (next == null || isDescendantOf(next, binding.sidebarContainer)) {
+                            // Гарантированный возврат в активный пункт сайдбара без случайного переключения экрана
+                            getActiveSidebarItem().requestFocus()
+                            return true
+                        }
+                    }
+                }
+                KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                    val current = currentFocus
+                    if (current != null && isDescendantOf(current, binding.sidebarContainer)) {
+                        focusCurrentSectionContent()
+                        return true
+                    }
+                }
+            }
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_ESCAPE) {
+            val current = currentFocus
+            if (current != null && isDescendantOf(current, binding.contentContainer)) {
+                getActiveSidebarItem().requestFocus()
+                return true
+            } else if (currentSection != NavSection.HOME) {
+                switchSection(NavSection.HOME, requestFocusOnContent = false)
+                binding.navItemHome.requestFocus()
+                return true
+            }
+        }
+        if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) {
+            val focus = currentFocus
+            if (focus != null) {
+                focus.performClick()
+                return true
+            }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        // Защита от потери фокуса ТВ при касаниях и кликах мыши
+        val result = super.dispatchTouchEvent(ev)
+        if (currentFocus == null) {
+            getActiveSidebarItem().requestFocus()
+        }
+        return result
+    }
+
     private fun checkDefaultLauncherPrompt() {
         if (!TvSystemActions.isDefaultLauncher(this)) {
             binding.root.postDelayed({
@@ -202,7 +303,7 @@ class MainActivity : AppCompatActivity() {
                     .setTitle(getString(R.string.update_available_title, update.latestVersion))
                     .setMessage(update.releaseNotes)
                     .setPositiveButton(R.string.update_btn_install) { _, _ ->
-                        Toast.makeText(this@MainActivity, "Загрузка обновления...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "Загрузка обновления...", Toast.LENGTH_SHORT).show()
                         lifecycleScope.launch {
                             updateManager.downloadAndInstall(update.downloadUrl) { progress ->
                                 // Optional progress reporting
@@ -213,22 +314,5 @@ class MainActivity : AppCompatActivity() {
                     .show()
             }
         }
-    }
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (currentSection != NavSection.HOME) {
-                switchSection(NavSection.HOME, requestFocusOnContent = true)
-                return true
-            }
-        }
-        if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) {
-            val focus = currentFocus
-            if (focus != null) {
-                focus.performClick()
-                return true
-            }
-        }
-        return super.onKeyDown(keyCode, event)
     }
 }

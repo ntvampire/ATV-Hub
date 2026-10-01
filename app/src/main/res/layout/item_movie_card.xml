@@ -5,6 +5,7 @@
     android:layout_marginEnd="@dimen/tv_card_spacing"
     android:clickable="true"
     android:focusable="true"
+    android:focusableInTouchMode="true"
     android:orientation="vertical">
 
     <FrameLayout
@@ -53,6 +54,23 @@
             android:paddingBottom="1dp"
             android:textColor="@color/accent_white"
             android:textSize="@dimen/text_size_badge"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <!-- Нумерация Топ-10 -->
+        <TextView
+            android:id="@+id/tv_rank_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|start"
+            android:layout_margin="5dp"
+            android:background="@drawable/badge_background"
+            android:paddingStart="7dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="7dp"
+            android:paddingBottom="2dp"
+            android:textColor="@color/accent_purple"
+            android:textSize="12sp"
             android:textStyle="bold"
             android:visibility="gone" />
 

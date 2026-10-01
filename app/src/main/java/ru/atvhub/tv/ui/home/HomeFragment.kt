@@ -10,7 +10,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.launch
 import ru.atvhub.tv.R
-import ru.atvhub.tv.data.SettingsRepository
+import ru.atvhub.tv.data.MediaCatalogRepository
+import ru.atvhub.tv.data.SmartTubeRepository
 import ru.atvhub.tv.databinding.FragmentHomeBinding
 import ru.atvhub.tv.model.HomeRow
 import ru.atvhub.tv.model.MediaItem
@@ -22,7 +23,9 @@ class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
-    private lateinit var settingsRepository: SettingsRepository
+
+    private lateinit var catalogRepo: MediaCatalogRepository
+    private lateinit var smartTubeRepo: SmartTubeRepository
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -35,139 +38,199 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        settingsRepository = SettingsRepository(requireContext())
+        catalogRepo = MediaCatalogRepository(requireContext())
+        smartTubeRepo = SmartTubeRepository(requireContext())
 
         binding.rvHomeRows.layoutManager = LinearLayoutManager(requireContext())
 
-        loadHomeData()
+        // 1. Быстрая загрузка кэшированных/стартовых данных (без ожидания сети)
+        renderInitialData()
+
+        // 2. Фоновое обновление актуальными данными из сети
+        loadLiveData()
     }
 
-    private fun loadHomeData() {
+    private fun renderInitialData() {
+        val initialRows = mutableListOf<HomeRow>()
+
+        // 1. Топ-10 фильмов
+        val topMovies = catalogRepo.getFallbackTopMovies()
+        initialRows.add(
+            HomeRow(
+                id = "row_top_movies",
+                title = getString(R.string.row_top_movies),
+                type = RowType.TOP_MOVIES,
+                items = topMovies
+            )
+        )
+
+        // 2. Топ-10 сериалов
+        val topSeries = catalogRepo.getFallbackTopSeries()
+        initialRows.add(
+            HomeRow(
+                id = "row_top_series",
+                title = getString(R.string.row_top_series),
+                type = RowType.TOP_SERIES,
+                items = topSeries
+            )
+        )
+
+        // 3. Подписки SmartTube (строго после Топ-10)
         viewLifecycleOwner.lifecycleScope.launch {
-            val topMovies = listOf(
-                MediaItem(
-                    id = "top_1",
-                    title = "Унабомбер",
-                    year = 2026,
-                    ratingKp = 6.2f,
-                    qualityBadge = "1080p",
-                    genres = listOf("Триллер"),
-                    description = "История поисков Теда Качинского."
-                ),
-                MediaItem(
-                    id = "top_2",
-                    title = "Гипотеза любви",
-                    year = 2026,
-                    ratingKp = 7.0f,
-                    qualityBadge = "1080p",
-                    genres = listOf("Мелодрама"),
-                    description = "Романтическая комедия об аспирантке."
-                ),
-                MediaItem(
-                    id = "top_3",
-                    title = "Один последний выстрел",
-                    year = 2026,
-                    ratingKp = 5.1f,
-                    qualityBadge = "4K HDR",
-                    genres = listOf("Боевик"),
-                    description = "Бывший спецагент спасает заложников."
-                ),
-                MediaItem(
-                    id = "top_4",
-                    title = "Диггер",
-                    year = 2026,
-                    ratingKp = 6.5f,
-                    qualityBadge = "1080p",
-                    genres = listOf("Приключения"),
-                    description = "Экспедиция в подземные катакомбы."
-                )
-            )
+            val subs = smartTubeRepo.getSubscriptions()
+            if (subs.isNotEmpty()) {
+                val updatedRows = getCurrentRows().toMutableList()
+                val insertIdx = updatedRows.indexOfFirst { it.type == RowType.TOP_SERIES }
+                    .takeIf { it >= 0 }?.plus(1) ?: 2
 
-            val topSeries = listOf(
-                MediaItem(
-                    id = "series_1",
-                    title = "Фонари",
-                    year = 2026,
-                    ratingKp = 7.8f,
-                    qualityBadge = "1080p",
-                    genres = listOf("Драма", "Детектив"),
-                    description = "Расследование загадочного преступления в сердце Америки."
-                ),
-                MediaItem(
-                    id = "series_2",
-                    title = "Гангстерленд",
-                    year = 2026,
-                    ratingKp = 8.3f,
-                    qualityBadge = "4K HDR",
-                    genres = listOf("Криминал"),
-                    description = "Война преступных синдикатов за контроль над городом."
-                ),
-                MediaItem(
-                    id = "series_3",
-                    title = "Футурама",
-                    year = 2026,
-                    ratingKp = 8.5f,
-                    qualityBadge = "1080p",
-                    genres = listOf("Мультфильм", "Комедия"),
-                    description = "Новые приключения команды Межпланетного экспресса."
-                ),
-                MediaItem(
-                    id = "series_4",
-                    title = "Монстр: История Лиззи Борден",
-                    year = 2026,
-                    ratingKp = 7.7f,
-                    qualityBadge = "1080p",
-                    genres = listOf("Биография", "Триллер"),
-                    description = "Мрачная драма о печально известном преступлении."
-                )
-            )
-
-            val digitalReleases = listOf(
-                MediaItem(
-                    id = "digital_1",
-                    title = "На краю Оук-стрит",
-                    year = 2026,
-                    ratingKp = 6.3f,
-                    qualityBadge = "1080p",
-                    genres = listOf("Фантастика"),
-                    description = "Таинственные явления в тихом американском пригороде."
-                ),
-                MediaItem(
-                    id = "digital_2",
-                    title = "Моана 2",
-                    year = 2024,
-                    ratingKp = 7.2f,
-                    qualityBadge = "4K HDR",
-                    genres = listOf("Мультфильм", "Приключения"),
-                    description = "Моана отправляется в новое опасное плавание по дальним морям Океании."
-                )
-            )
-
-            val rows = mutableListOf<HomeRow>()
-            rows.add(HomeRow(id = "row_top_movies", title = getString(R.string.row_top_movies), type = RowType.TOP_MOVIES, items = topMovies))
-            rows.add(HomeRow(id = "row_top_series", title = getString(R.string.row_top_series), type = RowType.TOP_SERIES, items = topSeries))
-            rows.add(HomeRow(id = "row_digital", title = getString(R.string.row_movies_digital), type = RowType.MOVIES_DIGITAL, items = digitalReleases))
-
-            binding.rvHomeRows.adapter = HomeRowAdapter(
-                rows = rows,
-                onMovieClick = { movie ->
-                    val intent = Intent(requireContext(), DetailsActivity::class.java).apply {
-                        putExtra("media_item", movie)
-                    }
-                    startActivity(intent)
-                },
-                onAppClick = { app ->
-                    val launchIntent = requireContext().packageManager.getLaunchIntentForPackage(app.packageName)
-                    if (launchIntent != null) {
-                        startActivity(launchIntent)
-                    }
+                val existingSubIdx = updatedRows.indexOfFirst { it.type == RowType.SMARTTUBE_SUBS }
+                if (existingSubIdx >= 0) {
+                    updatedRows[existingSubIdx] = HomeRow(
+                        id = "row_smarttube_subs",
+                        title = getString(R.string.row_smarttube_subs),
+                        type = RowType.SMARTTUBE_SUBS,
+                        items = subs
+                    )
+                } else {
+                    val targetIdx = insertIdx.coerceAtMost(updatedRows.size)
+                    updatedRows.add(
+                        targetIdx,
+                        HomeRow(
+                            id = "row_smarttube_subs",
+                            title = getString(R.string.row_smarttube_subs),
+                            type = RowType.SMARTTUBE_SUBS,
+                            items = subs
+                        )
+                    )
                 }
+                updateAdapter(updatedRows)
+            }
+        }
+
+        // 4. Цифровой релиз
+        val digitalReleases = catalogRepo.getFallbackDigitalReleases()
+        initialRows.add(
+            HomeRow(
+                id = "row_digital",
+                title = getString(R.string.row_movies_digital),
+                type = RowType.MOVIES_DIGITAL,
+                items = digitalReleases
             )
+        )
+
+        updateAdapter(initialRows)
+    }
+
+    private var currentRowsList: List<HomeRow> = emptyList()
+
+    private fun getCurrentRows(): List<HomeRow> = currentRowsList
+
+    private fun updateAdapter(rows: List<HomeRow>) {
+        currentRowsList = rows
+        binding.rvHomeRows.adapter = HomeRowAdapter(
+            rows = rows,
+            onMovieClick = { movie ->
+                val intent = Intent(requireContext(), DetailsActivity::class.java).apply {
+                    putExtra("media_item", movie)
+                }
+                startActivity(intent)
+            },
+            onSmartTubeClick = { video ->
+                smartTubeRepo.launchVideo(video)
+            },
+            onAppClick = { app ->
+                val launchIntent = requireContext().packageManager.getLaunchIntentForPackage(app.packageName)
+                if (launchIntent != null) {
+                    startActivity(launchIntent)
+                }
+            }
+        )
+    }
+
+    private fun loadLiveData() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val liveMovies = catalogRepo.getTopMoviesWeek()
+                val liveSeries = catalogRepo.getTopSeriesWeek()
+                val liveDigital = catalogRepo.getDigitalReleases()
+                val livePopular = catalogRepo.getPopularMovies()
+                val subs = smartTubeRepo.getSubscriptions()
+
+                val rows = mutableListOf<HomeRow>()
+
+                // 1. Топ-10 фильмов
+                if (liveMovies.isNotEmpty()) {
+                    rows.add(
+                        HomeRow(
+                            id = "row_top_movies",
+                            title = getString(R.string.row_top_movies),
+                            type = RowType.TOP_MOVIES,
+                            items = liveMovies
+                        )
+                    )
+                }
+
+                // 2. Топ-10 сериалов
+                if (liveSeries.isNotEmpty()) {
+                    rows.add(
+                        HomeRow(
+                            id = "row_top_series",
+                            title = getString(R.string.row_top_series),
+                            type = RowType.TOP_SERIES,
+                            items = liveSeries
+                        )
+                    )
+                }
+
+                // 3. Подписки SmartTube (строго после Топ-10)
+                if (subs.isNotEmpty()) {
+                    rows.add(
+                        HomeRow(
+                            id = "row_smarttube_subs",
+                            title = getString(R.string.row_smarttube_subs),
+                            type = RowType.SMARTTUBE_SUBS,
+                            items = subs
+                        )
+                    )
+                }
+
+                // 4. Цифровой релиз
+                if (liveDigital.isNotEmpty()) {
+                    rows.add(
+                        HomeRow(
+                            id = "row_digital",
+                            title = getString(R.string.row_movies_digital),
+                            type = RowType.MOVIES_DIGITAL,
+                            items = liveDigital
+                        )
+                    )
+                }
+
+                // 5. Популярное кино
+                if (livePopular.isNotEmpty()) {
+                    rows.add(
+                        HomeRow(
+                            id = "row_popular",
+                            title = getString(R.string.row_movies_new),
+                            type = RowType.NEW_EPISODES,
+                            items = livePopular
+                        )
+                    )
+                }
+
+                if (rows.isNotEmpty()) {
+                    updateAdapter(rows)
+                }
+            } catch (_: Exception) {}
         }
     }
 
     fun requestInitialFocus() {
-        binding.rvHomeRows.requestFocus()
+        binding.rvHomeRows.post {
+            binding.rvHomeRows.requestFocus()
+            val firstHolder = binding.rvHomeRows.findViewHolderForAdapterPosition(0)
+            firstHolder?.itemView?.findViewById<View>(R.id.rv_row_items)?.requestFocus()
+        }
     }
 
     override fun onDestroyView() {

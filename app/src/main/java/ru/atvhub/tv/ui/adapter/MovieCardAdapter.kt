@@ -10,6 +10,7 @@ import ru.atvhub.tv.model.MediaItem
 
 class MovieCardAdapter(
     private val items: List<MediaItem>,
+    private val showRank: Boolean = false,
     private val onItemClick: (MediaItem) -> Unit
 ) : RecyclerView.Adapter<MovieCardAdapter.ViewHolder>() {
 
@@ -24,7 +25,7 @@ class MovieCardAdapter(
 
             // Масштабирование при фокусе для четкого восприятия на ТВ без тяжелых анимаций
             binding.root.setOnFocusChangeListener { view, hasFocus ->
-                val scale = if (hasFocus) 1.04f else 1.0f
+                val scale = if (hasFocus) 1.05f else 1.0f
                 view.animate().scaleX(scale).scaleY(scale).setDuration(120).start()
             }
         }
@@ -53,6 +54,13 @@ class MovieCardAdapter(
             }
             tvSubtitle.text = subtitleText
             tvSubtitle.visibility = if (subtitleText.isNotEmpty()) View.VISIBLE else View.GONE
+
+            if (showRank && position < 10) {
+                tvRankBadge.text = "#${position + 1}"
+                tvRankBadge.visibility = View.VISIBLE
+            } else {
+                tvRankBadge.visibility = View.GONE
+            }
 
             if (!item.qualityBadge.isNullOrEmpty()) {
                 tvQualityBadge.text = item.qualityBadge
