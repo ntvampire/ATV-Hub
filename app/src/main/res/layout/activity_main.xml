@@ -1,103 +1,200 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_tv"
-    android:orientation="vertical">
+    android:background="@color/bg_root"
+    android:orientation="horizontal">
 
-    <!-- Верхняя панель (Top Bar) -->
+    <!-- Левый постоянный сайдбар (Persistent Sidebar) -->
     <LinearLayout
-        android:id="@+id/top_bar"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/top_bar_height"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="@dimen/tv_overscan_horizontal"
-        android:paddingTop="6dp"
-        android:paddingEnd="@dimen/tv_overscan_horizontal"
-        android:paddingBottom="2dp">
+        android:id="@+id/sidebar_container"
+        android:layout_width="@dimen/sidebar_width"
+        android:layout_height="match_parent"
+        android:background="@color/bg_sidebar"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingTop="24dp"
+        android:paddingBottom="24dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ATV HUB"
-            android:textColor="@color/accent_white"
-            android:textSize="@dimen/text_size_title"
-            android:textStyle="bold" />
+        <!-- Логотип приложения -->
+        <ImageView
+            android:id="@+id/sidebar_logo"
+            android:layout_width="@dimen/sidebar_logo_size"
+            android:layout_height="@dimen/sidebar_logo_size"
+            android:layout_marginBottom="28dp"
+            android:contentDescription="@string/app_name"
+            android:src="@drawable/ic_launcher_mark" />
 
+        <!-- Пункт: Поиск -->
+        <FrameLayout
+            android:id="@+id/nav_item_search"
+            android:layout_width="@dimen/sidebar_item_size"
+            android:layout_height="@dimen/sidebar_item_size"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/bg_sidebar_item"
+            android:focusable="true">
+
+            <View
+                android:id="@+id/nav_indicator_search"
+                android:layout_width="3.5dp"
+                android:layout_height="24dp"
+                android:layout_gravity="start|center_vertical"
+                android:background="@color/accent_purple"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/nav_icon_search"
+                android:layout_width="@dimen/sidebar_icon_size"
+                android:layout_height="@dimen/sidebar_icon_size"
+                android:layout_gravity="center"
+                android:contentDescription="@string/nav_search"
+                android:src="@drawable/ic_nav_search" />
+        </FrameLayout>
+
+        <!-- Пункт: Главная -->
+        <FrameLayout
+            android:id="@+id/nav_item_home"
+            android:layout_width="@dimen/sidebar_item_size"
+            android:layout_height="@dimen/sidebar_item_size"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/bg_sidebar_item"
+            android:focusable="true">
+
+            <View
+                android:id="@+id/nav_indicator_home"
+                android:layout_width="3.5dp"
+                android:layout_height="24dp"
+                android:layout_gravity="start|center_vertical"
+                android:background="@color/accent_purple"
+                android:visibility="visible" />
+
+            <ImageView
+                android:id="@+id/nav_icon_home"
+                android:layout_width="@dimen/sidebar_icon_size"
+                android:layout_height="@dimen/sidebar_icon_size"
+                android:layout_gravity="center"
+                android:contentDescription="@string/nav_home"
+                android:src="@drawable/ic_nav_home" />
+        </FrameLayout>
+
+        <!-- Пункт: Мой список -->
+        <FrameLayout
+            android:id="@+id/nav_item_mylist"
+            android:layout_width="@dimen/sidebar_item_size"
+            android:layout_height="@dimen/sidebar_item_size"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/bg_sidebar_item"
+            android:focusable="true">
+
+            <View
+                android:id="@+id/nav_indicator_mylist"
+                android:layout_width="3.5dp"
+                android:layout_height="24dp"
+                android:layout_gravity="start|center_vertical"
+                android:background="@color/accent_purple"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/nav_icon_mylist"
+                android:layout_width="@dimen/sidebar_icon_size"
+                android:layout_height="@dimen/sidebar_icon_size"
+                android:layout_gravity="center"
+                android:contentDescription="@string/nav_mylist"
+                android:src="@drawable/ic_nav_mylist" />
+        </FrameLayout>
+
+        <!-- Пункт: Онлайн ТВ -->
+        <FrameLayout
+            android:id="@+id/nav_item_livetv"
+            android:layout_width="@dimen/sidebar_item_size"
+            android:layout_height="@dimen/sidebar_item_size"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/bg_sidebar_item"
+            android:focusable="true">
+
+            <View
+                android:id="@+id/nav_indicator_livetv"
+                android:layout_width="3.5dp"
+                android:layout_height="24dp"
+                android:layout_gravity="start|center_vertical"
+                android:background="@color/accent_purple"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/nav_icon_livetv"
+                android:layout_width="@dimen/sidebar_icon_size"
+                android:layout_height="@dimen/sidebar_icon_size"
+                android:layout_gravity="center"
+                android:contentDescription="@string/nav_livetv"
+                android:src="@drawable/ic_nav_livetv" />
+        </FrameLayout>
+
+        <!-- Пункт: Приложения -->
+        <FrameLayout
+            android:id="@+id/nav_item_apps"
+            android:layout_width="@dimen/sidebar_item_size"
+            android:layout_height="@dimen/sidebar_item_size"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/bg_sidebar_item"
+            android:focusable="true">
+
+            <View
+                android:id="@+id/nav_indicator_apps"
+                android:layout_width="3.5dp"
+                android:layout_height="24dp"
+                android:layout_gravity="start|center_vertical"
+                android:background="@color/accent_purple"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/nav_icon_apps"
+                android:layout_width="@dimen/sidebar_icon_size"
+                android:layout_height="@dimen/sidebar_icon_size"
+                android:layout_gravity="center"
+                android:contentDescription="@string/nav_apps"
+                android:src="@drawable/ic_nav_apps" />
+        </FrameLayout>
+
+        <!-- Разделитель (выталкивает настройки вниз) -->
         <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <!-- Кнопка Настройки сети (Wi-Fi) -->
-        <ImageButton
-            android:id="@+id/btn_network"
-            android:layout_width="@dimen/top_bar_btn_size"
-            android:layout_height="@dimen/top_bar_btn_size"
-            android:layout_marginEnd="6dp"
-            android:background="@drawable/selector_icon_button"
-            android:contentDescription="@string/action_network_settings"
-            android:focusable="true"
-            android:src="@drawable/ic_wifi"
-            android:tint="@color/selector_icon_tint" />
+        <!-- Пункт: Настройки (внизу) -->
+        <FrameLayout
+            android:id="@+id/nav_item_settings"
+            android:layout_width="@dimen/sidebar_item_size"
+            android:layout_height="@dimen/sidebar_item_size"
+            android:background="@drawable/bg_sidebar_item"
+            android:focusable="true">
 
-        <!-- Кнопка Выбор ТВ / HDMI входов -->
-        <ImageButton
-            android:id="@+id/btn_hdmi"
-            android:layout_width="@dimen/top_bar_btn_size"
-            android:layout_height="@dimen/top_bar_btn_size"
-            android:layout_marginEnd="6dp"
-            android:background="@drawable/selector_icon_button"
-            android:contentDescription="@string/action_hdmi_inputs"
-            android:focusable="true"
-            android:src="@drawable/ic_hdmi"
-            android:tint="@color/selector_icon_tint" />
+            <View
+                android:id="@+id/nav_indicator_settings"
+                android:layout_width="3.5dp"
+                android:layout_height="24dp"
+                android:layout_gravity="start|center_vertical"
+                android:background="@color/accent_purple"
+                android:visibility="gone" />
 
-        <!-- Кнопка Настройки устройства (Android TV Settings) -->
-        <ImageButton
-            android:id="@+id/btn_device_settings"
-            android:layout_width="@dimen/top_bar_btn_size"
-            android:layout_height="@dimen/top_bar_btn_size"
-            android:layout_marginEnd="6dp"
-            android:background="@drawable/selector_icon_button"
-            android:contentDescription="@string/action_device_settings"
-            android:focusable="true"
-            android:src="@drawable/ic_settings"
-            android:tint="@color/selector_icon_tint" />
+            <ImageView
+                android:id="@+id/nav_icon_settings"
+                android:layout_width="@dimen/sidebar_icon_size"
+                android:layout_height="@dimen/sidebar_icon_size"
+                android:layout_gravity="center"
+                android:contentDescription="@string/nav_settings"
+                android:src="@drawable/ic_nav_settings" />
+        </FrameLayout>
 
-        <!-- Кнопка Настройки приложения ATV Hub -->
-        <ImageButton
-            android:id="@+id/btn_app_settings"
-            android:layout_width="@dimen/top_bar_btn_size"
-            android:layout_height="@dimen/top_bar_btn_size"
-            android:layout_marginEnd="10dp"
-            android:background="@drawable/selector_icon_button"
-            android:contentDescription="@string/action_launcher_settings"
-            android:focusable="true"
-            android:src="@drawable/ic_app_settings"
-            android:tint="@color/selector_icon_tint" />
-
-        <!-- Системные часы -->
-        <TextClock
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:format12Hour="HH:mm"
-            android:format24Hour="HH:mm"
-            android:textColor="@color/text_secondary"
-            android:textSize="@dimen/text_size_header" />
     </LinearLayout>
 
-    <!-- Вертикальный контейнер строк главного экрана -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_home_rows"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
+    <!-- Основной контейнер содержимого (Fragments) -->
+    <FrameLayout
+        android:id="@+id/content_container"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
         android:layout_weight="1"
-        android:clipToPadding="false"
-        android:descendantFocusability="afterDescendants"
-        android:paddingTop="6dp"
-        android:paddingBottom="@dimen/tv_overscan_vertical" />
+        android:background="@color/bg_root" />
 
 </LinearLayout>

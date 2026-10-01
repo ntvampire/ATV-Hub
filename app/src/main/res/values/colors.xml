@@ -1,21 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Строгая темная палитра без градиентов -->
-    <color name="bg_tv">#0A0A0C</color>
-    <color name="bg_surface">#121216</color>
-    <color name="card_bg">#18181D</color>
-    <color name="card_bg_focused">#24242C</color>
-    <color name="border_normal">#24242A</color>
-    <color name="border_focused">#FFFFFF</color>
+    <!-- OLED Dark Palette (No pure white backgrounds, true black for OLED) -->
+    <color name="bg_root">#080B10</color>
+    <color name="bg_tv">@color/bg_root</color>
+    <color name="bg_sidebar">#000000</color>
+    <color name="bg_surface">#0F141C</color>
+    <color name="accent_white">#F1F5F9</color>
+    <color name="card_bg">#151922</color>
+    <color name="card_bg_focused">#1E2433</color>
+    <color name="border_normal">#232A38</color>
+    <color name="border_focused">#7C4DFF</color>
 
-    <color name="text_primary">#F2F2F5</color>
-    <color name="text_secondary">#8E8E96</color>
-    <color name="text_muted">#5A5A62</color>
+    <color name="accent_purple">#8B5CF6</color>
+    <color name="accent_purple_dark">#7C4DFF</color>
+    <color name="accent_purple_light">#A78BFA</color>
 
-    <color name="badge_bg">#23232B</color>
-    <color name="badge_text">#D0D0D6</color>
+    <color name="text_primary">#F1F5F9</color>
+    <color name="text_secondary">#94A3B8</color>
+    <color name="text_muted">#64748B</color>
 
-    <color name="accent_white">#FFFFFF</color>
+    <color name="sidebar_inactive">#64748B</color>
+    <color name="sidebar_active">#8B5CF6</color>
+    <color name="sidebar_focused">#F1F5F9</color>
+
+    <color name="badge_bg">#1E2433</color>
+    <color name="badge_text">#CBD5E1</color>
+    <color name="rating_gold">#FBBF24</color>
+
     <color name="transparent">#00000000</color>
-    <color name="overlay_dim">#CC000000</color>
+    <color name="overlay_dim">#D9000000</color>
 </resources>

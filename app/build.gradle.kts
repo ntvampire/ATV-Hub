@@ -5,15 +5,15 @@ plugins {
 }
 
 android {
-    namespace = "com.atvhub.launcher"
+    namespace = "ru.atvhub.tv"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.atvhub.launcher"
+        applicationId = "ru.atvhub.tv"
         minSdk = 28
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 10
+        versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
