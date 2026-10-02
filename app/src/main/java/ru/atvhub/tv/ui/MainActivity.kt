@@ -213,6 +213,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN) {
+            if (currentFocus == null) {
+                getActiveSidebarItem().requestFocus()
+            }
             when (event.keyCode) {
                 KeyEvent.KEYCODE_DPAD_LEFT -> {
                     val current = currentFocus
@@ -255,7 +258,7 @@ class MainActivity : AppCompatActivity() {
         }
         if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) {
             val focus = currentFocus
-            if (focus != null) {
+            if (focus != null && focus !is android.widget.EditText) {
                 focus.performClick()
                 return true
             }

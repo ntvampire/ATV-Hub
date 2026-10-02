@@ -7,6 +7,7 @@ import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -18,6 +19,8 @@ import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
 class TorrentsRepository(private val context: Context) {
+
+    private val settingsRepo = SettingsRepository(context)
 
     companion object {
         private const val TAG = "TorrentsRepo"
@@ -35,6 +38,34 @@ class TorrentsRepository(private val context: Context) {
         .build()
 
     private val gson = Gson()
+
+    suspend fun getActiveTorrServerHost(): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                settingsRepo.torrServerHost.firstOrNull() ?: DEFAULT_TORRSERVE_HOST
+            } catch (_: Exception) {
+                DEFAULT_TORRSERVE_HOST
+            }
+        }
+    }
+
+    suspend fun checkTorrServer(hostUrl: String): Pair<Boolean, String> = withContext(Dispatchers.IO) {
+        val cleanHost = if (hostUrl.startsWith("http")) hostUrl else "http://$hostUrl"
+        val testUrl = "$cleanHost/echo"
+        try {
+            val req = Request.Builder().url(testUrl).build()
+            httpClient.newCall(req).execute().use { resp ->
+                if (resp.isSuccessful) {
+                    val body = resp.body?.string()?.trim() ?: "OK"
+                    Pair(true, "Подключено: $body")
+                } else {
+                    Pair(false, "Ошибка ответа: ${resp.code}")
+                }
+            }
+        } catch (e: Exception) {
+            Pair(false, "Недоступен: ${e.localizedMessage ?: "Сбой сети"}")
+        }
+    }
 
     suspend fun searchTorrents(item: MediaItem): List<TorrentItem> = withContext(Dispatchers.IO) {
         val list = mutableListOf<TorrentItem>()
@@ -133,8 +164,8 @@ class TorrentsRepository(private val context: Context) {
     }
 
     suspend fun getStreamUrl(torrent: TorrentItem): String = withContext(Dispatchers.IO) {
-        // Проверяем, запущен ли TorrServe API локально
-        val testUrl = "$DEFAULT_TORRSERVE_HOST/echo"
+        val activeHost = getActiveTorrServerHost()
+        val testUrl = "$activeHost/echo"
         var isTorrServeActive = false
         try {
             val req = Request.Builder().url(testUrl).build()
@@ -146,7 +177,7 @@ class TorrentsRepository(private val context: Context) {
         if (isTorrServeActive) {
             // Отправляем добавление торрента в TorrServer
             try {
-                val addUrl = "$DEFAULT_TORRSERVE_HOST/torrents/action"
+                val addUrl = "$activeHost/torrents/action"
                 val payload = mapOf(
                     "action" to "add",
                     "link" to torrent.magnetUrl,
@@ -158,7 +189,7 @@ class TorrentsRepository(private val context: Context) {
                 httpClient.newCall(addReq).execute().close()
             } catch (_: Exception) {}
 
-            "$DEFAULT_TORRSERVE_HOST/stream?link=${URLEncoder.encode(torrent.magnetUrl, "UTF-8")}&index=1&preload"
+            "$activeHost/stream?link=${URLEncoder.encode(torrent.magnetUrl, "UTF-8")}&index=1&preload"
         } else {
             // Прямая демонстрационная трансляция для проверки плеера
             "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"

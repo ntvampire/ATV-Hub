@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.launch
 import ru.atvhub.tv.R
 import ru.atvhub.tv.data.MediaCatalogRepository
@@ -227,9 +228,16 @@ class HomeFragment : Fragment() {
 
     fun requestInitialFocus() {
         binding.rvHomeRows.post {
-            binding.rvHomeRows.requestFocus()
             val firstHolder = binding.rvHomeRows.findViewHolderForAdapterPosition(0)
-            firstHolder?.itemView?.findViewById<View>(R.id.rv_row_items)?.requestFocus()
+            val innerRv = firstHolder?.itemView?.findViewById<RecyclerView>(R.id.rv_row_items)
+            val firstChild = innerRv?.layoutManager?.findViewByPosition(0) ?: innerRv?.getChildAt(0)
+            if (firstChild != null) {
+                firstChild.requestFocus()
+            } else {
+                innerRv?.post {
+                    (innerRv.layoutManager?.findViewByPosition(0) ?: innerRv.getChildAt(0))?.requestFocus()
+                }
+            }
         }
     }
 

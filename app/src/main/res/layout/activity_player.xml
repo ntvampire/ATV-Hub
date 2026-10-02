@@ -1,17 +1,294 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/player_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_tv"
     android:keepScreenOn="true">
 
+    <!-- Сам видеоплеер ExoPlayer -->
     <androidx.media3.ui.PlayerView
         android:id="@+id/player_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:focusable="true" />
+        android:focusable="false"
+        app:use_controller="false" />
 
-    <!-- HUD Оверлей для Онлайн ТВ -->
+    <!-- Всплывающий центральный индикатор действия (Перемотка / Пауза) -->
+    <LinearLayout
+        android:id="@+id/center_action_hud"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_sidebar_item"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingStart="24dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="14dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/iv_center_icon"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_player_play"
+            app:tint="@color/accent_purple" />
+
+        <TextView
+            android:id="@+id/tv_center_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:textColor="@color/accent_white"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Полный оверлей управления (OSD) -->
+    <FrameLayout
+        android:id="@+id/osd_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <!-- Верхний бар с заголовком и часами -->
+        <LinearLayout
+            android:id="@+id/top_controls_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:background="#D9080B10"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="36dp"
+            android:paddingTop="20dp"
+            android:paddingEnd="36dp"
+            android:paddingBottom="20dp">
+
+            <ImageButton
+                android:id="@+id/btn_player_back"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/selector_player_btn"
+                android:contentDescription="Назад"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:padding="8dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_player_back"
+                app:tint="@color/accent_white" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="18dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_player_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_player_subtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_player_clock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_secondary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Нижний бар с таймлайном и кнопками управления -->
+        <LinearLayout
+            android:id="@+id/bottom_controls_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:background="#E6080B10"
+            android:orientation="vertical"
+            android:paddingStart="36dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="36dp"
+            android:paddingBottom="24dp">
+
+            <!-- Шкала времени (Timeline) -->
+            <LinearLayout
+                android:id="@+id/layout_timeline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_time_current"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="00:00"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp" />
+
+                <SeekBar
+                    android:id="@+id/player_seek_bar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="12dp"
+                    android:layout_weight="1"
+                    android:focusable="false"
+                    android:max="1000"
+                    android:progressBackgroundTint="#44FFFFFF"
+                    android:progressTint="@color/accent_purple"
+                    android:thumbTint="@color/accent_white" />
+
+                <TextView
+                    android:id="@+id/tv_time_duration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="00:00"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- Ряд кнопок управления -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="14dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <!-- Предыдущая серия (для сериалов) -->
+                <ImageButton
+                    android:id="@+id/btn_prev_episode"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="@drawable/selector_player_btn"
+                    android:contentDescription="Предыдущая серия"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:padding="10dp"
+                    android:rotation="180"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_player_next_ep"
+                    android:visibility="gone"
+                    app:tint="@color/accent_white" />
+
+                <!-- Перемотка назад (-10 сек) -->
+                <ImageButton
+                    android:id="@+id/btn_rewind"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="@drawable/selector_player_btn"
+                    android:contentDescription="-10 сек"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:padding="10dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_player_rewind"
+                    app:tint="@color/accent_white" />
+
+                <!-- Воспроизведение / Пауза -->
+                <ImageButton
+                    android:id="@+id/btn_play_pause"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="@drawable/selector_player_btn"
+                    android:contentDescription="Воспроизведение / Пауза"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:padding="12dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_player_pause"
+                    app:tint="@color/accent_white" />
+
+                <!-- Перемотка вперед (+10 сек) -->
+                <ImageButton
+                    android:id="@+id/btn_forward"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="@drawable/selector_player_btn"
+                    android:contentDescription="+10 сек"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:padding="10dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_player_forward"
+                    app:tint="@color/accent_white" />
+
+                <!-- Следующая серия (для сериалов) -->
+                <ImageButton
+                    android:id="@+id/btn_next_episode"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="24dp"
+                    android:background="@drawable/selector_player_btn"
+                    android:contentDescription="Следующая серия"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:padding="10dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_player_next_ep"
+                    android:visibility="gone"
+                    app:tint="@color/accent_white" />
+
+                <!-- Звуковая дорожка -->
+                <ImageButton
+                    android:id="@+id/btn_audio"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="@drawable/selector_player_btn"
+                    android:contentDescription="Аудиодорожки"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:padding="10dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_player_audio"
+                    app:tint="@color/accent_white" />
+
+                <!-- Субтитры -->
+                <ImageButton
+                    android:id="@+id/btn_subtitles"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/selector_player_btn"
+                    android:contentDescription="Субтитры"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:padding="10dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_player_subtitles"
+                    app:tint="@color/accent_white" />
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- HUD Оверлей для Онлайн ТВ (переключение каналов) -->
     <LinearLayout
         android:id="@+id/live_channel_hud"
         android:layout_width="wrap_content"

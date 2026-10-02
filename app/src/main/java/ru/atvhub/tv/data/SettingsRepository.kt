@@ -34,10 +34,52 @@ class SettingsRepository(private val context: Context) {
         private val KEY_APPS_ORDER = stringPreferencesKey("apps_order_json")
         private val KEY_TORRSERVER_MODE = stringPreferencesKey("torrserver_mode") // "internal" / "external"
         private val KEY_TORRSERVER_HOST = stringPreferencesKey("torrserver_host")
-        private val KEY_TORRSERVER_PORT = stringPreferencesKey("torrserver_port")
         private val KEY_IPTV_M3U_URL = stringPreferencesKey("iptv_m3u_url")
         private val KEY_IPTV_EPG_URL = stringPreferencesKey("iptv_epg_url")
         private val KEY_ASKED_DEFAULT_HOME = booleanPreferencesKey("asked_default_home")
+        private val KEY_TORRENT_SOURCE = stringPreferencesKey("torrent_source") // "jacred" / "jackett" / "torrserver"
+        private val KEY_JACKETT_URL = stringPreferencesKey("jackett_url")
+        private val KEY_JACKETT_API_KEY = stringPreferencesKey("jackett_api_key")
+    }
+
+    val torrServerMode: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[KEY_TORRSERVER_MODE] ?: "internal"
+    }
+
+    val torrServerHost: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[KEY_TORRSERVER_HOST] ?: "http://127.0.0.1:8090"
+    }
+
+    suspend fun setTorrServerConfig(mode: String, host: String) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_TORRSERVER_MODE] = mode
+            prefs[KEY_TORRSERVER_HOST] = host
+        }
+    }
+
+    val torrentSource: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[KEY_TORRENT_SOURCE] ?: "jacred"
+    }
+
+    val jackettUrl: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[KEY_JACKETT_URL] ?: ""
+    }
+
+    val jackettApiKey: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[KEY_JACKETT_API_KEY] ?: ""
+    }
+
+    suspend fun setJackettConfig(url: String, apiKey: String) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_JACKETT_URL] = url
+            prefs[KEY_JACKETT_API_KEY] = apiKey
+        }
+    }
+
+    suspend fun setTorrentSource(source: String) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_TORRENT_SOURCE] = source
+        }
     }
 
     val askedDefaultHome: Flow<Boolean> = context.dataStore.data.map { prefs ->
