@@ -1,5 +1,14 @@
 # ATV Hub 📺
 
+[![Status: Work in Progress](https://img.shields.io/badge/Status-In%20Development-orange?style=for-the-badge&logo=git)](https://github.com/ntvampire/ATV-Hub)
+[![Latest Release](https://img.shields.io/github/v/release/ntvampire/ATV-Hub?style=for-the-badge&color=blueviolet)](https://github.com/ntvampire/ATV-Hub/releases/latest)
+[![Platform](https://img.shields.io/badge/Platform-Android%20TV%20%7C%20Google%20TV-blue?style=for-the-badge&logo=android)](https://github.com/ntvampire/ATV-Hub)
+
+> [!WARNING]
+> **🚧 Проект находится в активной разработке (Work in Progress / MVP v2.0.0)**  
+> Текущая сборка представляет собой рабочий прототип с базовым функционалом (лаунчер, Leanback-интерфейс, встроенный TorrServer, IPTV и плеер Flux-style). Доработка онлайн-балансеров и расширенной истории запланирована на следующие итерации.  
+> Подробный статус и план задач см. в **[SPECIFICATION.md](SPECIFICATION.md)**.
+
 **ATV Hub** — современный медиакомбайн и лаунчер для **Android TV / Google TV**, объединяющий каталог медиа с двумя движками воспроизведения (онлайн-потоки и торренты), IPTV-плеер с телегидом, каталог приложений с поддержкой ТВ-входов и глубокую интеграцию со SmartTube.
 
 Разрабатывается как независимое нативное приложение на **Kotlin** под Android TV.
