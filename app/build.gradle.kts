@@ -46,6 +46,12 @@ android {
         buildConfig = true
     }
 
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     // Именование артефактов в формате: ATV-Hub-v1.0.0.apk
     applicationVariants.all {
         val variant = this

@@ -41,16 +41,29 @@ class TorrentsRepository(private val context: Context) {
 
     suspend fun getActiveTorrServerHost(): String {
         return withContext(Dispatchers.IO) {
-            try {
-                settingsRepo.torrServerHost.firstOrNull() ?: DEFAULT_TORRSERVE_HOST
-            } catch (_: Exception) {
-                DEFAULT_TORRSERVE_HOST
+            val mode = settingsRepo.torrServerMode.firstOrNull() ?: "internal"
+            if (mode == "internal") {
+                TorrServerManager.startServer(context)
+                TorrServerManager.LOCAL_URL
+            } else {
+                try {
+                    settingsRepo.torrServerHost.firstOrNull() ?: DEFAULT_TORRSERVE_HOST
+                } catch (_: Exception) {
+                    DEFAULT_TORRSERVE_HOST
+                }
             }
         }
     }
 
     suspend fun checkTorrServer(hostUrl: String): Pair<Boolean, String> = withContext(Dispatchers.IO) {
         val cleanHost = if (hostUrl.startsWith("http")) hostUrl else "http://$hostUrl"
+        if (cleanHost.contains("127.0.0.1") || cleanHost.contains("localhost")) {
+            val started = TorrServerManager.startServer(context)
+            if (started) {
+                return@withContext Pair(true, "Встроенный TorrServer запущен и готов к работе!")
+            }
+        }
+
         val testUrl = "$cleanHost/echo"
         try {
             val req = Request.Builder().url(testUrl).build()
